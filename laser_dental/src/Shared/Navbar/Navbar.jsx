@@ -1,7 +1,15 @@
 import { Link, NavLink } from "react-router-dom";
 import Logo from "../Logo/Logo";
+import useAuth from "../../hooks/useAuth";
 
 const Navbar = () => {
+
+  const {user,logOut}=useAuth();
+  console.log(user);
+
+  const handleLogOUt=async()=>{
+    await logOut();
+  }
 
   // Drawer close function
   const closeDrawer = () => {
@@ -24,26 +32,28 @@ const Navbar = () => {
       </li>
 
       <li className="text-center">
-        <NavLink
-          to="/services"
+        {
+          user ? <button onClick={handleLogOUt}>logout</button> : <NavLink
+          to="/login"
           onClick={closeDrawer}
           className={({ isActive }) =>
             isActive ? "font-semibold text-primary border-b-2" : ""
           }
         >
-          Services
+          Logn
         </NavLink>
+        }
       </li>
 
       <li>
         <NavLink
-          to="/doctor"
+          to="/dashboard/adminHome"
           onClick={closeDrawer}
           className={({ isActive }) =>
             isActive ? "font-semibold text-primary border-b-2" : ""
           }
         >
-          Doctor
+          Dashboard
         </NavLink>
       </li>
 
