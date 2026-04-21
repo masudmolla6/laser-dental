@@ -7,6 +7,11 @@ import AuthLayout from "../layouts/AuthLayout";
 import LogIn from "../authentication/Login/Login";
 import DashboardLayout from "../layouts/DashboardLayout";
 import AdminHome from "../pages/Dashboard/AdminHome/AdminHome";
+import ControlPanel from "../pages/Dashboard/ControlPanel/ControlPanel";
+import AddBanner from "../pages/Dashboard/AddBanner/AddBanner";
+import ManageBanner from "../pages/Dashboard/ManageBanner/ManageBanner";
+import AddPicture from "../pages/Dashboard/AddPicture/AddPicture";
+import ManageGallery from "../pages/Dashboard/ManageGallery/ManageGallery";
 
 const router=createBrowserRouter([
     {
@@ -44,6 +49,26 @@ const router=createBrowserRouter([
             {
                 path:"adminHome",
                 element:<AdminHome></AdminHome>
+            },
+            {
+                path:"controlPanel",
+                element:<ControlPanel></ControlPanel>
+            },
+            {
+                path:"addBanner",
+                element:<AddBanner></AddBanner>
+            },
+            {
+                path:"manageBanner",
+                element:<ManageBanner></ManageBanner>
+            },
+            {
+                path:"addPicture",
+                element:<AddPicture></AddPicture>
+            },
+            {
+                path:"manageGallery",
+                element:<ManageGallery></ManageGallery>
             }
         ]
     }

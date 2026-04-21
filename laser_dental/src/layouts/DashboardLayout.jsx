@@ -1,21 +1,16 @@
 import React, { useState } from "react";
-
 import {
   LayoutDashboard,
-  ShoppingCart,
-  ClipboardList,
-  User,
-  Heart,
   Settings,
-  CreditCard,
-  Users,
-  PlusCircle,
-  Package,
-  BarChart3,
-  Home,
-  Menu,
+  ImagePlus,
+  Images,
+  Image,
+  GalleryVertical,
   LogOut,
+  Home,
+  Menu
 } from "lucide-react";
+
 import useAuth from "../hooks/useAuth";
 import { NavLink, Outlet } from "react-router-dom";
 
@@ -39,14 +34,38 @@ const DashboardLayout = () => {
 //     { name: "Settings", path: "/dashboard/settings", icon: <Settings size={18} /> },
 //   ];
 
-  const adminLinks = [
-    { name: "Admin Home", path: "/dashboard/adminHome", icon: <LayoutDashboard size={18} /> },
-    { name: "Manage Users", path: "/dashboard/manageUsers", icon: <Users size={18} /> },
-    { name: "Add Product", path: "/dashboard/addProducts", icon: <PlusCircle size={18} /> },
-    { name: "Manage Products", path: "/dashboard/manageProducts", icon: <Package size={18} /> },
-    { name: "Manage Orders", path: "/dashboard/manageOrders", icon: <ClipboardList size={18} /> },
-    { name: "Analytics", path: "/dashboard/analytics", icon: <BarChart3 size={18} /> },
-  ];
+const adminLinks = [
+  {
+    name: "Admin Home",
+    path: "/dashboard/adminHome",
+    icon: <LayoutDashboard size={18} />,
+  },
+  {
+    name: "Control Panel",
+    path: "/dashboard/controlPanel",
+    icon: <Settings size={18} />, // control/settings vibe
+  },
+  {
+    name: "Add Banner",
+    path: "/dashboard/addBanner",
+    icon: <ImagePlus size={18} />, // add image/banner
+  },
+  {
+    name: "Manage Banner",
+    path: "/dashboard/manageBanner",
+    icon: <Images size={18} />, // multiple banners
+  },
+  {
+    name: "Add Picture",
+    path: "/dashboard/addPicture",
+    icon: <Image size={18} />, // single image upload
+  },
+  {
+    name: "Manage Gallery",
+    path: "/dashboard/manageGallery",
+    icon: <GalleryVertical size={18} />, // gallery management
+  },
+];
 
   const sharedLinks = [{ name: "Home", path: "/", icon: <Home size={18} /> }];
 
