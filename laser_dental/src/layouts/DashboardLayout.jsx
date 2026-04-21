@@ -163,7 +163,7 @@ const adminLinks = [
 
       {/* MOBILE OVERLAY */}
       {isSidebarOpen && (
-        <div
+        <div 
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />

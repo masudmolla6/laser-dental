@@ -20,10 +20,19 @@ const LogIn = () => {
         setError("");
 
         logIn(data.email, data.password)
-            .then(result => {
+            .then(async (result) => {
+                const user = result.user;
+
+                // 🔥 Firebase ID Token (MAIN THING)
+                const token = await user.getIdToken();
+
+                // 🔐 store token for backend access
+                localStorage.setItem("access-token", token);
+
+                // redirect user
                 navigate(from, { replace: true });
             })
-            .catch(error => {
+            .catch((error) => {
                 setError("Invalid email or password");
                 console.error(error);
             })

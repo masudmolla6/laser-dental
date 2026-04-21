@@ -40,6 +40,20 @@ const Navbar = () => {
             isActive ? "font-semibold text-primary border-b-2" : ""
           }
         >
+          
+        </NavLink>
+        }
+      </li>
+
+      <li className="text-center">
+        {
+          user ? <button onClick={handleLogOUt}>logout</button> : <NavLink
+          to="/login"
+          onClick={closeDrawer}
+          className={({ isActive }) =>
+            isActive ? "font-semibold text-primary border-b-2" : ""
+          }
+        >
           Logn
         </NavLink>
         }

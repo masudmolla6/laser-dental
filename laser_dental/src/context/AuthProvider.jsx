@@ -15,11 +15,22 @@ const AuthProvider = ({children}) => {
             .finally(()=> setLoading(false));
     }
 
-    const logOut=()=>{
+    const logOut = async () => {
         setLoading(true);
-        return signOut(auth)
-            .finally(()=> setLoading(false));
-    }
+
+        try {
+            // 🔐 remove token first
+            localStorage.removeItem("access-token");
+
+            // 🔥 Firebase logout
+            await signOut(auth);
+
+        } catch (error) {
+            console.error("Logout error:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(()=>{
         const unsubscribe = onAuthStateChanged(auth, currentUser =>{
