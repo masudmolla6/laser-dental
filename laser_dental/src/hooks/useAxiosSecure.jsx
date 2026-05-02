@@ -48,7 +48,7 @@ const useAxiosSecure = () => {
           localStorage.removeItem("access-token");
 
           // ✅ React way redirect
-          navigate("/login");
+          // navigate("/login");
         }
 
         return Promise.reject(error);

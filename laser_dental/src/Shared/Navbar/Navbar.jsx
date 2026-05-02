@@ -5,11 +5,11 @@ import useCheckAdmin from "../../hooks/useCheckAdmin";
 
 const Navbar = () => {
 
-  const result=useCheckAdmin();
-  console.log(result);
+  const [admin, refetch]=useCheckAdmin();
+  console.log(admin);
 
   const {user,logOut}=useAuth();
-  console.log(user);
+  // console.log(user);
 
   const handleLogOUt=async()=>{
     await logOut();
@@ -20,60 +20,69 @@ const Navbar = () => {
     const drawer = document.getElementById("mobile-drawer");
     if (drawer) drawer.checked = false;
   };
-
-  const navItems = (
-    <>
-      <li className="text-center">
-        <NavLink
-          to="/"
-          onClick={closeDrawer}
-          className={({ isActive }) =>
-            isActive ? "font-semibold text-primary border-b-2" : ""
-          }
-        >
-          Home
-        </NavLink>
-      </li>
-
-      <li className="text-center">
-        {
-          user ? <button onClick={handleLogOUt}>logout</button> : <NavLink
-          to="/login"
-          onClick={closeDrawer}
-          className={({ isActive }) =>
-            isActive ? "font-semibold text-primary border-b-2" : ""
-          }
-        >
-          Logn
-        </NavLink>
+const navItems = (
+  <>
+    <li className="text-center">
+      <NavLink
+        to="/"
+        onClick={closeDrawer}
+        className={({ isActive }) =>
+          isActive ? "font-semibold text-primary border-b-2" : ""
         }
-      </li>
+      >
+        Home
+      </NavLink>
+    </li>
 
-      <li>
-        <NavLink
-          to="/dashboard/adminHome"
-          onClick={closeDrawer}
-          className={({ isActive }) =>
-            isActive ? "font-semibold text-primary border-b-2" : ""
-          }
-        >
-          Dashboard
-        </NavLink>
-      </li>
+    {/* 🔥 Login / Logout */}
+    <li className="text-center">
+      {
+        user ? (
+          <button onClick={handleLogOUt}>Logout</button>
+        ) : (
+          <NavLink
+            to="/login"
+            onClick={closeDrawer}
+            className={({ isActive }) =>
+              isActive ? "font-semibold text-primary border-b-2" : ""
+            }
+          >
+            Login
+          </NavLink>
+        )
+      }
+    </li>
 
-      <li>
-        <NavLink
-          to="/contact"
-          onClick={closeDrawer}
-          className={({ isActive }) =>
-            isActive ? "font-semibold text-primary border-b-2" : ""
-          }
-        >
-          Contact
-        </NavLink>
-      </li>
-    </>
-  );
+    {/* 🔥 Dashboard ONLY ADMIN */}
+    {
+      user && admin && (
+        <li>
+          <NavLink
+            to="/dashboard/adminHome"
+            onClick={closeDrawer}
+            className={({ isActive }) =>
+              isActive ? "font-semibold text-primary border-b-2" : ""
+            }
+          >
+            Dashboard
+          </NavLink>
+        </li>
+      )
+    }
+
+    <li>
+      <NavLink
+        to="/contact"
+        onClick={closeDrawer}
+        className={({ isActive }) =>
+          isActive ? "font-semibold text-primary border-b-2" : ""
+        }
+      >
+        Contact
+      </NavLink>
+    </li>
+  </>
+);
 
   return (
 

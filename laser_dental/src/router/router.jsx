@@ -13,6 +13,7 @@ import ManageBanner from "../pages/Dashboard/ManageBanner/ManageBanner";
 import AddPicture from "../pages/Dashboard/AddPicture/AddPicture";
 import ManageGallery from "../pages/Dashboard/ManageGallery/ManageGallery";
 import PrivateRoute from "../routes/PrivateRoute";
+import AdminRoute from "../routes/AdminRoute";
 
 const router=createBrowserRouter([
     {
@@ -44,8 +45,8 @@ const router=createBrowserRouter([
         ]
     },
     {
-        path:"dashboard",
-        element:<PrivateRoute><DashboardLayout></DashboardLayout></PrivateRoute>,
+        path:"/dashboard",
+        element:<PrivateRoute><AdminRoute><DashboardLayout></DashboardLayout></AdminRoute></PrivateRoute>,
         children:[
             {
                 path:"adminHome",
