@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../hooks/useAuth';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import useAxiosSecure from '../../hooks/useAxiosSecure';
+
 
 const LogIn = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { logIn } = useAuth();
+    const axiosSecure=useAxiosSecure();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -28,6 +32,16 @@ const LogIn = () => {
 
                 // 🔐 store token for backend access
                 localStorage.setItem("access-token", token);
+
+                const res=await axiosSecure.post("http://localhost:5000/users", { email: user.email });
+                console.log(res);
+                if(res.data.insertedId){
+                    Swal.fire({
+                    title: "Drag me!",
+                    icon: "success",
+                    draggable: true
+                    });
+                }
 
                 // redirect user
                 navigate(from, { replace: true });
