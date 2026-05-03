@@ -33,7 +33,7 @@ const LogIn = () => {
                 // 🔐 store token for backend access
                 localStorage.setItem("access-token", token);
 
-                const res=await axiosSecure.post("http://localhost:5000/users", { email: user.email });
+                const res=await axiosSecure.post("/users", { email: user.email });
                 console.log(res);
                 if(res.data.insertedId){
                     Swal.fire({
