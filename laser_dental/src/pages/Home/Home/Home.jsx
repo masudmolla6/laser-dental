@@ -3,6 +3,12 @@ import Banner from '../Banner/Banner';
 import Contact from '../Contact/Contact';
 import About from '../About/About';
 import axios from 'axios';
+import ServicesSection from '../Services/Services';
+import Testimonials from '../Testimonials/Testimonials';
+import CtaBanner from '../CtaBanner/CtaBanner';
+import Services from '../Services/Services';
+import StatsSection from '../StatsSection/StatsSection';
+import Hero from '../Hero/Hero';
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -26,7 +32,12 @@ useEffect(() => {
   console.log(data);
     return (
         <div>
-            <Banner></Banner>
+            {/* <Banner></Banner> */}
+            <Hero></Hero>
+            <StatsSection></StatsSection>
+            <Services></Services>
+            <Testimonials></Testimonials>
+            <CtaBanner></CtaBanner>
             <Contact></Contact>
             <About></About>
         </div>
