@@ -9,6 +9,7 @@ import CtaBanner from '../CtaBanner/CtaBanner';
 import Services from '../Services/Services';
 import StatsSection from '../StatsSection/StatsSection';
 import Hero from '../Hero/Hero';
+import AboutDoctor from '../AboutDoctor/AboutDoctor';
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -34,6 +35,7 @@ useEffect(() => {
         <div>
             {/* <Banner></Banner> */}
             <Hero></Hero>
+            <AboutDoctor></AboutDoctor>
             <StatsSection></StatsSection>
             <Services></Services>
             <Testimonials></Testimonials>
