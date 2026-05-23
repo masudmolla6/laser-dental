@@ -141,7 +141,7 @@ const AddBanner = () => {
       console.log(bannerInfo);
 
       // 3. Send to backend
-    //   mutate(bannerInfo);
+      mutate(bannerInfo);
     } catch (error) {
       console.error("Submit error:", error?.response?.data || error.message);
       Swal.fire("Upload Failed", "Could not upload image to ImgBB.", "error");
