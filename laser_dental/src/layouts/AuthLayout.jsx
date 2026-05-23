@@ -4,7 +4,7 @@ import { Link, Outlet } from 'react-router-dom';
 
 const AuthLayout = () => {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 bg-base-200">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 bg-base-200">
 
             <div className="mb-6">
                 <Link to="/">

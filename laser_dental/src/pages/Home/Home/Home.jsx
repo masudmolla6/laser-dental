@@ -10,6 +10,8 @@ import Services from '../Services/Services';
 import StatsSection from '../StatsSection/StatsSection';
 import Hero from '../Hero/Hero';
 import AboutDoctor from '../AboutDoctor/AboutDoctor';
+import ContactBooking from '../ContactBooking/ContactBooking';
+import Locations from '../Locations/Locations';
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -33,15 +35,17 @@ useEffect(() => {
   console.log(data);
     return (
         <div>
-            {/* <Banner></Banner> */}
+            <Banner></Banner>
             <Hero></Hero>
             <AboutDoctor></AboutDoctor>
-            <StatsSection></StatsSection>
+            <ContactBooking></ContactBooking>
+            {/* <StatsSection></StatsSection> */}
             <Services></Services>
             <Testimonials></Testimonials>
-            <CtaBanner></CtaBanner>
-            <Contact></Contact>
-            <About></About>
+            <Locations></Locations>
+            {/* <CtaBanner></CtaBanner> */}
+            {/* <Contact></Contact> */}
+            {/* <About></About> */}
         </div>
     );
 };
