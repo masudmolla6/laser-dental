@@ -31,12 +31,16 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
 
   const userCollection=client.db("Laser_Dental").collection("users");
+  const bannersCollection=client.db("Laser_Dental").collection("banners");
+  
 
   app.get("/secure", verifyToken, (req, res) => {
     console.log("You are Verified.");
     res.send("You are verified user");
   });
 
+
+  // Admin Related Api
   
   app.get(
     "/admin/users",
@@ -48,30 +52,30 @@ async function run() {
     }
   );
 
-app.get(
-  "/admin/users/:email",
-  verifyToken,
-  async (req, res) => {
-    try {
-      const email = req.params.email;
+  app.get(
+    "/admin/users/:email",
+    verifyToken,
+    async (req, res) => {
+      try {
+        const email = req.params.email;
 
-      // 🔥 FIXED (use req.user)
-      if (email !== req.user.email) {
-        return res.status(403).send({ message: "Forbidden access" });
+        // 🔥 FIXED (use req.user)
+        if (email !== req.user.email) {
+          return res.status(403).send({ message: "Forbidden access" });
+        }
+
+        const user = await userCollection.findOne({ email });
+
+        const isAdmin = user?.role === "admin";
+
+        res.send({ isAdmin });
+
+      } catch (error) {
+        console.error("ADMIN CHECK ERROR:", error);
+        res.status(500).send({ message: "Internal server error" });
       }
-
-      const user = await userCollection.findOne({ email });
-
-      const isAdmin = user?.role === "admin";
-
-      res.send({ isAdmin });
-
-    } catch (error) {
-      console.error("ADMIN CHECK ERROR:", error);
-      res.status(500).send({ message: "Internal server error" });
     }
-  }
-);
+  );
 
   app.post("/users", async (req, res) => {
     const user = req.body;
@@ -92,6 +96,66 @@ app.get(
     });
 
     res.send(result);
+  });
+
+  // Banner Related Api
+
+  app.post("/banners", async (req, res) => {
+    try {
+      const bannerData = req.body;
+
+      // Basic Validation
+      if (
+        !bannerData.title ||
+        !bannerData.accentTitle ||
+        !bannerData.subtitle ||
+        !bannerData.image
+      ) {
+        return res.status(400).send({
+          success: false,
+          message: "Missing required fields",
+        });
+      }
+
+      // 🔥 Check Existing Banner
+      const existingBanner =
+        await bannersCollection.findOne({
+          title: bannerData.title,
+          accentTitle: bannerData.accentTitle,
+          image: bannerData.image,
+        });
+
+      // If already exists
+      if (existingBanner) {
+        return res.status(409).send({
+          success: false,
+          message: "Banner already exists",
+        });
+      }
+
+      // Add timestamps
+      bannerData.createdAt = new Date();
+      bannerData.updatedAt = new Date();
+
+      // Save to DB
+      const result =
+        await bannersCollection.insertOne(
+          bannerData
+        );
+
+      res.send({
+        success: true,
+        message: "Banner added successfully",
+        insertedId: result.insertedId,
+      });
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).send({
+        success: false,
+        message: "Failed to add banner",
+      });
+    }
   });
 
 
