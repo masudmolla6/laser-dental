@@ -98,6 +98,61 @@ async function run() {
   });
 
   // Banner Related Api
+  app.get("/banners",verifyToken,verifyAdmin(userCollection), async (req, res) => {  
+    try {
+
+      const result = await bannersCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      res.send({
+        success: true,
+        banners: result,
+      });
+
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).send({
+        success: false,
+        message: "Failed to fetch banners",
+      });
+    }
+  });
+
+  app.delete("/banners/:id",verifyToken,verifyAdmin, async (req, res) => {
+    try {
+      const id = req.params.id;
+
+      const query = {
+        _id: new ObjectId(id),
+      };
+
+      const result = await bannersCollection.deleteOne(query);
+
+      if (result.deletedCount === 0) {
+        return res.status(404).send({
+          success: false,
+          message: "Banner not found",
+        });
+      }
+
+      res.send({
+        success: true,
+        message: "Banner deleted successfully",
+        result,
+      });
+
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).send({
+        success: false,
+        message: "Failed to delete banner",
+      });
+    }
+  });
 
   app.post("/banners",verifyToken,verifyAdmin(userCollection), async (req, res) => {
     console.log("Hello");
