@@ -9,11 +9,11 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import AdminHome from "../pages/Dashboard/AdminHome/AdminHome";
 import ControlPanel from "../pages/Dashboard/ControlPanel/ControlPanel";
 import AddBanner from "../pages/Dashboard/AddBanner/AddBanner";
-import ManageBanner from "../pages/Dashboard/ManageBanner/ManageBanner";
 import AddPicture from "../pages/Dashboard/AddPicture/AddPicture";
 import ManageGallery from "../pages/Dashboard/ManageGallery/ManageGallery";
 import PrivateRoute from "../routes/PrivateRoute";
 import AdminRoute from "../routes/AdminRoute";
+import ManageBanners from "../pages/Dashboard/ManageBanners/ManageBanners";
 
 const router=createBrowserRouter([
     {
@@ -61,8 +61,8 @@ const router=createBrowserRouter([
                 element:<AddBanner></AddBanner>
             },
             {
-                path:"manageBanner",
-                element:<ManageBanner></ManageBanner>
+                path:"manageBanners",
+                element:<ManageBanners></ManageBanners>
             },
             {
                 path:"addPicture",

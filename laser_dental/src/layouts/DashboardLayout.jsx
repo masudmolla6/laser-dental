@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Settings,
@@ -8,196 +8,307 @@ import {
   GalleryVertical,
   LogOut,
   Home,
-  Menu
+  Menu,
+  X,
+  ChevronRight,
 } from "lucide-react";
-
 import useAuth from "../hooks/useAuth";
 import { NavLink, Outlet } from "react-router-dom";
 
+// ── Tooth SVG ──────────────────────────────────────────────────────────────
+const ToothSVG = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" fill="currentColor">
+    <path d="M32 4C22 4 14 10 14 20c0 5 2 9 4 13l4 20c1 4 4 7 10 7s9-3 10-7l4-20c2-4 4-8 4-13 0-10-8-16-18-16z" />
+  </svg>
+);
 
+const adminLinks = [
+  { name: "Admin Home",    path: "/dashboard/adminHome",    icon: LayoutDashboard, color: "#0ea5e9" },
+  { name: "Control Panel", path: "/dashboard/controlPanel", icon: Settings,        color: "#8b5cf6" },
+  { name: "Add Banner",    path: "/dashboard/addBanner",    icon: ImagePlus,       color: "#10b981" },
+  { name: "Manage Banners",path: "/dashboard/manageBanners",icon: Images,          color: "#f59e0b" },
+  { name: "Add Picture",   path: "/dashboard/addPicture",   icon: Image,           color: "#ec4899" },
+  { name: "Manage Gallery",path: "/dashboard/manageGallery",icon: GalleryVertical, color: "#6366f1" },
+];
+
+const sharedLinks = [
+  { name: "Back to Website", path: "/", icon: Home, color: "#94a3b8" },
+];
 
 const DashboardLayout = () => {
   const { user, logOut, loading } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if(loading){
-    return <p>Loading</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white animate-pulse"
+            style={{ background: "linear-gradient(135deg, #0284c7, #6366f1)" }}>
+            <ToothSVG size={24} />
+          </div>
+          <p className="text-white/50 text-sm">Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
-//   const userLinks = [
-//     { name: "User Home", path: "/dashboard/userHome", icon: <LayoutDashboard size={18} /> },
-//     { name: "Profile", path: "/dashboard/profile", icon: <User size={18} /> },
-//     { name: "My Cart", path: "/dashboard/myCart", icon: <ShoppingCart size={18} /> },
-//     { name: "My Orders", path: "/dashboard/myOrders", icon: <ClipboardList size={18} /> },
-//     { name: "Wishlist", path: "/dashboard/wishlist", icon: <Heart size={18} /> },
-//     { name: "Payment History", path: "/dashboard/userPaymentHistory", icon: <CreditCard size={18} /> },
-//     { name: "Settings", path: "/dashboard/settings", icon: <Settings size={18} /> },
-//   ];
-
-const adminLinks = [
-  {
-    name: "Admin Home",
-    path: "/dashboard/adminHome",
-    icon: <LayoutDashboard size={18} />,
-  },
-  {
-    name: "Control Panel",
-    path: "/dashboard/controlPanel",
-    icon: <Settings size={18} />, // control/settings vibe
-  },
-  {
-    name: "Add Banner",
-    path: "/dashboard/addBanner",
-    icon: <ImagePlus size={18} />, // add image/banner
-  },
-  {
-    name: "Manage Banner",
-    path: "/dashboard/manageBanner",
-    icon: <Images size={18} />, // multiple banners
-  },
-  {
-    name: "Add Picture",
-    path: "/dashboard/addPicture",
-    icon: <Image size={18} />, // single image upload
-  },
-  {
-    name: "Manage Gallery",
-    path: "/dashboard/manageGallery",
-    icon: <GalleryVertical size={18} />, // gallery management
-  },
-];
-
-  const sharedLinks = [{ name: "Home", path: "/", icon: <Home size={18} /> }];
-
-  const linksToRender = user.email=="masudmolla2937@gmail.com" && adminLinks;
+  const linksToRender = user?.email === "masudmolla2937@gmail.com" ? adminLinks : [];
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-gray-900 dark:via-gray-950 dark:to-black">
-      
-      {/* SIDEBAR */}
+    <div className="flex min-h-screen" style={{ fontFamily: "'DM Sans', sans-serif", background: "#f1f5f9" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
+        .font-display { font-family: 'Playfair Display', serif; }
+
+        .sidebar-link {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          border-radius: 12px;
+          font-size: 13.5px;
+          font-weight: 500;
+          color: rgba(255,255,255,0.55);
+          text-decoration: none;
+          transition: all 0.18s ease;
+          position: relative;
+        }
+        .sidebar-link:hover {
+          background: rgba(255,255,255,0.06);
+          color: rgba(255,255,255,0.9);
+        }
+        .sidebar-link.active {
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        }
+        .sidebar-link .link-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: transform 0.18s ease;
+        }
+        .sidebar-link:hover .link-icon,
+        .sidebar-link.active .link-icon {
+          transform: scale(1.08);
+        }
+        .sidebar-link .chevron {
+          margin-left: auto;
+          opacity: 0;
+          transition: opacity 0.18s, transform 0.18s;
+          transform: translateX(-4px);
+        }
+        .sidebar-link:hover .chevron,
+        .sidebar-link.active .chevron {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes fadeSlideRight {
+          from { opacity: 0; transform: translateX(-16px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .sidebar-anim { animation: fadeSlideRight 0.35s ease both; }
+      `}</style>
+
+      {/* ══════════════════════════════════════════════════════
+          SIDEBAR
+      ══════════════════════════════════════════════════════ */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-white/90 dark:bg-gray-900/80 backdrop-blur-md 
-        border-r border-gray-200 dark:border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out 
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-80 flex flex-col transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        style={{
+          background: "linear-gradient(160deg, #0a1628 0%, #0c2340 60%, #0f2d52 100%)",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
+        }}
       >
-        <div className="flex flex-col h-full">
+        {/* ── Brand header ──────────────────────────────────────────── */}
+        <div
+          className="px-5 py-5 flex-shrink-0"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div className="flex items-center gap-3 mb-5">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #0284c7, #6366f1)" }}
+            >
+              <ToothSVG size={18} />
+            </div>
+            <div>
+              <p className="text-white text-sm font-bold leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Laser Dental
+              </p>
+              <p className="text-white/40 text-[10px] uppercase tracking-[0.15em] font-medium">
+                Admin Panel
+              </p>
+            </div>
+            {/* Mobile close */}
+            <button
+              className="lg:hidden ml-auto text-white/40 hover:text-white transition-colors"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X size={18} />
+            </button>
+          </div>
 
-          {/* HEADER */}
-          <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col items-center text-center">
-              <div className="relative">
-                <img
-                  src={user?.photoURL || "https://i.ibb.co/2kR8z2Q/user.png"}
-                  alt="User"
-                  className="w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg"
-                />
-                <span className="absolute bottom-1 right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
-              </div>
-
-              <h2 className="mt-3 text-sm font-semibold text-gray-800 dark:text-gray-200">
+          {/* User card */}
+          <div
+            className="flex items-center gap-3 px-3 py-3 rounded-2xl"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div className="relative flex-shrink-0">
+              <img
+                src={user?.photoURL || "https://i.ibb.co/2kR8z2Q/user.png"}
+                alt="avatar"
+                className="w-9 h-9 rounded-xl object-cover"
+                style={{ border: "2px solid rgba(255,255,255,0.12)" }}
+              />
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                style={{ background: "#22c55e", borderColor: "#0c2340" }}
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="text-white text-xs font-semibold truncate leading-tight">
                 {user?.displayName || "Admin"}
-              </h2>
-
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate w-40">
+              </p>
+              <p className="text-white/40 text-[10px] truncate mt-0.5">
                 {user?.email}
               </p>
             </div>
           </div>
+        </div>
 
-          {/* NAV + FOOTER */}
-          <div className="flex flex-col justify-between flex-1 overflow-hidden">
+        {/* ── Navigation ────────────────────────────────────────────── */}
+        <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 py-4 flex flex-col gap-1">
 
-            {/* NAVIGATION */}
-            <nav className="mt-6 space-y-1 px-4 overflow-y-auto custom-scrollbar">
-              {linksToRender.map((link) => (
-                <NavLink
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-indigo-500"
-                    }`
-                  }
-                >
-                  {link.icon}
-                  {link.name}
-                </NavLink>
-              ))}
-            </nav>
+          {/* Section label */}
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/25 px-3 mb-2">
+            Management
+          </p>
 
-            {/* FOOTER */}
-            <div className="border-t border-gray-200 dark:border-gray-800 py-4 px-4 space-y-2 bg-white dark:bg-gray-900">
-              
-              {sharedLinks.map((link) => (
-                <NavLink
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? "bg-indigo-500 text-white"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-indigo-500"
-                    }`
-                  }
-                >
-                  {link.icon}
-                  {link.name}
-                </NavLink>
-              ))}
-
-              <button
-                onClick={logOut}
-                className="flex items-center gap-3 w-full px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-red-600 transition-colors duration-200"
+          {linksToRender.map((link, i) => {
+            const Icon = link.icon;
+            return (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
+                style={{ animationDelay: `${i * 40}ms` }}
               >
-                <LogOut size={18} />
-                Logout
-              </button>
+                <div
+                  className="link-icon"
+                  style={{ background: link.color + "22", color: link.color }}
+                >
+                  <Icon size={15} />
+                </div>
+                <span>{link.name}</span>
+                <ChevronRight size={13} className="chevron" />
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* ── Footer ────────────────────────────────────────────────── */}
+        <div
+          className="px-3 py-4 flex-shrink-0 flex flex-col gap-1"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          {sharedLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
+              >
+                <div className="link-icon" style={{ background: "rgba(255,255,255,0.06)", color: "#94a3b8" }}>
+                  <Icon size={15} />
+                </div>
+                <span>{link.name}</span>
+                <ChevronRight size={13} className="chevron" />
+              </NavLink>
+            );
+          })}
+
+          <button
+            onClick={logOut}
+            className="sidebar-link w-full text-left"
+            style={{ color: "rgba(248,113,113,0.7)" }}
+          >
+            <div className="link-icon" style={{ background: "rgba(239,68,68,0.12)", color: "#f87171" }}>
+              <LogOut size={15} />
             </div>
-          </div>
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
-      {/* MOBILE OVERLAY */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* MOBILE TOP BAR */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-md z-40 flex items-center justify-between px-5 py-3">
-        
-        <div className="flex items-center gap-2">
-          <button
-            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-            onClick={() => setIsSidebarOpen(true)}
-          >
-            <Menu size={22} />
-          </button>
+      {/* ══════════════════════════════════════════════════════
+          MAIN AREA
+      ══════════════════════════════════════════════════════ */}
+      <div className="flex-1 flex flex-col min-w-0">
 
-          <h2 className="font-semibold text-lg text-gray-800 dark:text-gray-200">
-            Dashboard
-          </h2>
-        </div>
+        {/* Mobile top bar */}
+        <header
+          className="lg:hidden flex items-center justify-between px-4 py-3 flex-shrink-0 sticky top-0 z-30"
+          style={{
+            background: "rgba(255,255,255,0.95)",
+            backdropFilter: "blur(12px)",
+            borderBottom: "1px solid #e2e8f0",
+            boxShadow: "0 1px 12px rgba(0,0,0,0.06)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <Menu size={18} />
+            </button>
+            <div className="flex items-center gap-2">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
+                style={{ background: "linear-gradient(135deg, #0284c7, #6366f1)" }}
+              >
+                <ToothSVG size={14} />
+              </div>
+              <span className="font-bold text-slate-800 text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Dashboard
+              </span>
+            </div>
+          </div>
 
-        <img
-          src={user?.photoURL || "https://i.ibb.co/Y2bRZLk/user.png"}
-          alt="avatar"
-          className="w-8 h-8 rounded-full border border-indigo-500 object-cover"
-        />
-      </header>
+          <img
+            src={user?.photoURL || "https://i.ibb.co/2kR8z2Q/user.png"}
+            alt="avatar"
+            className="w-8 h-8 rounded-xl object-cover"
+            style={{ border: "2px solid #e2e8f0" }}
+          />
+        </header>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto w-full mt-14 lg:mt-0 lg:px-10 py-6">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 p-2 min-h-[80vh]">
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

@@ -242,7 +242,7 @@ const AddBanner = () => {
                 <Field label="Banner Image" icon={ImagePlus} error={errors.image?.message}>
                   <label
                     htmlFor="bannerImage"
-                    className="relative flex flex-col items-center justify-center h-36 rounded-xl cursor-pointer overflow-hidden transition-all duration-200 border-2 border-dashed hover:border-sky-400 hover:bg-sky-50"
+                    className="relative flex flex-col items-center justify-center h-56 rounded-xl cursor-pointer overflow-hidden transition-all duration-200 border-2 border-dashed hover:border-sky-400 hover:bg-sky-50"
                     style={{
                       borderColor: errors.image ? "#f87171" : "#cbd5e1",
                       background: preview ? "transparent" : "#f8fafc",
