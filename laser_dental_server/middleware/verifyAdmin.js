@@ -5,6 +5,8 @@ const verifyAdmin = (userCollection) => {
     try {
       const email = req.user?.email; // 🔥 verifyToken theke ashbe
 
+      console.log(email);
+
       if (!email) {
         return res.status(401).send({ message: "Unauthorized access" });
       }

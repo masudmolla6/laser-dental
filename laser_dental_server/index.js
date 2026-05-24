@@ -39,7 +39,6 @@ async function run() {
     res.send("You are verified user");
   });
 
-
   // Admin Related Api
   
   app.get(
@@ -100,7 +99,8 @@ async function run() {
 
   // Banner Related Api
 
-  app.post("/banners", async (req, res) => {
+  app.post("/banners",verifyToken,verifyAdmin(userCollection), async (req, res) => {
+    console.log("Hello");
     try {
       const bannerData = req.body;
 
