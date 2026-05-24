@@ -16,10 +16,9 @@ import {
 import Swal from "sweetalert2";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 
-
 const IMG_BB_KEY = import.meta.env.VITE_image_host_key;
 
-// ── Small reusable field wrapper ───────────────────────────────────────────
+// ── Field wrapper ──────────────────────────────────────────────────────────
 const Field = ({ label, icon: Icon, error, children }) => (
   <div className="flex flex-col gap-1.5">
     {label && (
@@ -39,11 +38,11 @@ const Field = ({ label, icon: Icon, error, children }) => (
 );
 
 const inputCls = (hasErr) =>
-  `w-full px-4 py-3 rounded-xl border text-sm text-slate-800 bg-slate-50 outline-none transition-all duration-200 placeholder-slate-400
-   focus:bg-white focus:ring-2
-   ${hasErr
-     ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-     : "border-slate-200 focus:border-sky-400 focus:ring-sky-100"}`;
+  `w-full px-4 py-3 rounded-xl border text-sm text-slate-800 bg-slate-50 outline-none transition-all duration-200 placeholder-slate-400 focus:bg-white focus:ring-2 ${
+    hasErr
+      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+      : "border-slate-200 focus:border-sky-400 focus:ring-sky-100"
+  }`;
 
 // ── Main Component ─────────────────────────────────────────────────────────
 const AddBanner = () => {
@@ -60,21 +59,16 @@ const AddBanner = () => {
     formState: { errors },
   } = useForm({ defaultValues: { align: "left" } });
 
-  // Register image field manually so RHF tracks it
-  const imageRegister = register("image", { required: "Image is required" });
-
-  // watch for live preview
-  const watchTitle      = watch("title", "");
-  const watchAccent     = watch("accentTitle", "");
-  const watchSubtitle   = watch("subtitle", "");
-  const watchBtnText    = watch("buttonText", "");
-  const watchAlign      = watch("align", "left");
+  const watchTitle    = watch("title", "");
+  const watchAccent   = watch("accentTitle", "");
+  const watchSubtitle = watch("subtitle", "");
+  const watchBtnText  = watch("buttonText", "");
+  const watchAlign    = watch("align", "left");
 
   // ── Image change ──────────────────────────────────────────────────────
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // shouldValidate: true clears the "required" error immediately
     setValue("image", e.target.files, { shouldValidate: true });
     clearErrors("image");
     setPreview(URL.createObjectURL(file));
@@ -86,7 +80,6 @@ const AddBanner = () => {
       const res = await axiosSecure.post("/banners", bannerData);
       return res.data;
     },
-
     onSuccess: () => {
       Swal.fire({
         title: "Banner Added!",
@@ -98,7 +91,7 @@ const AddBanner = () => {
       setPreview("");
     },
     onError: (err) => {
-      console.error(err);
+      console.error("Backend error:", err?.response?.data || err.message);
       Swal.fire({
         title: "Upload Failed",
         text: err?.response?.data?.message || "Something went wrong.",
@@ -111,21 +104,37 @@ const AddBanner = () => {
   // ── Submit ────────────────────────────────────────────────────────────
   const onSubmit = async (data) => {
     try {
-      const imageFile = data.image?.[0];
-      if (!imageFile) return Swal.fire("Error", "Image is required", "error");
-      if (!IMG_BB_KEY) return Swal.fire("Error", "ImgBB API key missing in .env", "error");
+      // Debug logs
+      const token = localStorage.getItem("access-token");
+      console.log("Token:", token ? "exists ✅" : "MISSING ❌");
+      console.log("ImgBB key:", IMG_BB_KEY ? "exists ✅" : "MISSING ❌");
 
-      // 1. Upload to ImgBB
+      const imageFile = data.image?.[0];
+      if (!imageFile) {
+        return Swal.fire("Error", "Image is required", "error");
+      }
+      if (!IMG_BB_KEY) {
+        return Swal.fire("Error", "ImgBB API key missing in .env", "error");
+      }
+
+      // 1. ImgBB upload
       const formData = new FormData();
       formData.append("image", imageFile);
+      console.log("Uploading to ImgBB...");
 
       const imageRes = await axios.post(
         `https://api.imgbb.com/1/upload?key=${IMG_BB_KEY}`,
-        formData
+        formData,
+        { timeout: 15000 }
       );
-      const imageUrl = imageRes.data.data.display_url;
 
-      // 2. Build banner object
+      const imageUrl = imageRes.data?.data?.display_url;
+      if (!imageUrl) {
+        return Swal.fire("Error", "ImgBB did not return image URL", "error");
+      }
+      console.log("ImgBB done:", imageUrl);
+
+      // 2. Banner object
       const bannerInfo = {
         title:       data.title,
         accentTitle: data.accentTitle,
@@ -137,20 +146,27 @@ const AddBanner = () => {
         isActive:    true,
         order:       Date.now(),
       };
+      console.log("Sending to backend:", bannerInfo);
 
-      console.log(bannerInfo);
-
-      // 3. Send to backend
+      // 3. Backend
       mutate(bannerInfo);
+
     } catch (error) {
       console.error("Submit error:", error?.response?.data || error.message);
-      Swal.fire("Upload Failed", "Could not upload image to ImgBB.", "error");
+      if (error.code === "ECONNABORTED") {
+        Swal.fire("Timeout", "ImgBB upload timed out. Check your internet.", "error");
+      } else {
+        Swal.fire("Failed", error?.response?.data?.message || error.message, "error");
+      }
     }
   };
 
+  // ── Render ────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8"
-      style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      className="min-h-screen bg-slate-100 p-4 md:p-8"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
         .font-display { font-family: 'Playfair Display', serif; }
@@ -161,7 +177,7 @@ const AddBanner = () => {
 
       <div className="max-w-5xl mx-auto fade-up">
 
-        {/* ── Page header ──────────────────────────────────────────────── */}
+        {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles size={16} className="text-sky-500" />
@@ -177,17 +193,19 @@ const AddBanner = () => {
           </p>
         </div>
 
-        {/* ── Card ─────────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-3xl overflow-hidden border border-slate-100"
-          style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.07)" }}>
-
-          {/* Card top bar */}
-          <div className="h-1.5 w-full"
-            style={{ background: "linear-gradient(90deg, #0284c7, #6366f1, #0ea5e9)" }} />
+        {/* Card */}
+        <div
+          className="bg-white rounded-3xl overflow-hidden border border-slate-100"
+          style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.07)" }}
+        >
+          <div
+            className="h-1.5 w-full"
+            style={{ background: "linear-gradient(90deg, #0284c7, #6366f1, #0ea5e9)" }}
+          />
 
           <div className="grid lg:grid-cols-2 gap-0">
 
-            {/* ── LEFT: Form ─────────────────────────────────────────── */}
+            {/* LEFT: Form */}
             <div className="p-7 md:p-9 border-r border-slate-100">
               <h2 className="font-semibold text-slate-700 text-base mb-6 flex items-center gap-2">
                 <div className="w-1 h-5 rounded-full bg-sky-500" />
@@ -196,7 +214,6 @@ const AddBanner = () => {
 
               <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
-                {/* Title */}
                 <Field label="Main Title" icon={Type} error={errors.title?.message}>
                   <input
                     placeholder="e.g. Laser-Powered"
@@ -205,7 +222,6 @@ const AddBanner = () => {
                   />
                 </Field>
 
-                {/* Accent title */}
                 <Field label="Accent Title (gradient text)" icon={Sparkles} error={errors.accentTitle?.message}>
                   <input
                     placeholder="e.g. Dental Care"
@@ -214,7 +230,6 @@ const AddBanner = () => {
                   />
                 </Field>
 
-                {/* Subtitle */}
                 <Field label="Subtitle / Description" error={errors.subtitle?.message}>
                   <textarea
                     placeholder="Short description shown below the heading..."
@@ -224,7 +239,6 @@ const AddBanner = () => {
                   />
                 </Field>
 
-                {/* Image upload */}
                 <Field label="Banner Image" icon={ImagePlus} error={errors.image?.message}>
                   <label
                     htmlFor="bannerImage"
@@ -235,12 +249,18 @@ const AddBanner = () => {
                     }}
                   >
                     {preview ? (
-                      <img src={preview} className="absolute inset-0 w-full h-full object-cover" alt="preview" />
+                      <img
+                        src={preview}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        alt="preview"
+                      />
                     ) : (
                       <div className="flex flex-col items-center gap-2 text-slate-400">
                         <ImagePlus size={28} />
                         <span className="text-xs font-medium">Click to upload image</span>
-                        <span className="text-[10px] text-slate-300">PNG, JPG, WEBP — recommended 1920×1080</span>
+                        <span className="text-[10px] text-slate-300">
+                          PNG, JPG, WEBP — recommended 1920×1080
+                        </span>
                       </div>
                     )}
                     {preview && (
@@ -255,15 +275,11 @@ const AddBanner = () => {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
-                        handleImageChange(e);
-                        setValue("image", e.target.files, { shouldValidate: true });
-                      }}
+                      onChange={handleImageChange}
                     />
                   </label>
                 </Field>
 
-                {/* Button text + link */}
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Button Text" icon={MousePointerClick} error={errors.buttonText?.message}>
                     <input
@@ -281,13 +297,12 @@ const AddBanner = () => {
                   </Field>
                 </div>
 
-                {/* Text align */}
                 <Field label="Text Alignment">
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { val: "left",  Icon: AlignLeft,  label: "Left" },
-                      { val: "right", Icon: AlignRight, label: "Right" },
-                    ].map(({ val, Icon: Ic, label }) => {
+                      { val: "left",  Ic: AlignLeft,  label: "Left" },
+                      { val: "right", Ic: AlignRight, label: "Right" },
+                    ].map(({ val, Ic, label }) => {
                       const selected = watchAlign === val;
                       return (
                         <label
@@ -315,7 +330,6 @@ const AddBanner = () => {
                   </div>
                 </Field>
 
-                {/* Submit */}
                 <button
                   type="submit"
                   disabled={isPending}
@@ -326,15 +340,21 @@ const AddBanner = () => {
                   }}
                 >
                   {isPending ? (
-                    <><Loader2 size={16} className="animate-spin" /> Uploading...</>
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Uploading...
+                    </>
                   ) : (
-                    <><ImagePlus size={16} /> Add Banner Slide</>
+                    <>
+                      <ImagePlus size={16} />
+                      Add Banner Slide
+                    </>
                   )}
                 </button>
               </form>
             </div>
 
-            {/* ── RIGHT: Live Preview ────────────────────────────────── */}
+            {/* RIGHT: Live Preview */}
             <div className="p-7 md:p-9 bg-slate-50">
               <h2 className="font-semibold text-slate-700 text-base mb-6 flex items-center gap-2">
                 <div className="w-1 h-5 rounded-full bg-purple-500" />
@@ -342,10 +362,12 @@ const AddBanner = () => {
               </h2>
 
               <div className="relative h-[400px] rounded-2xl overflow-hidden bg-slate-200 shadow-inner">
-
-                {/* BG image */}
                 {preview ? (
-                  <img src={preview} className="absolute inset-0 w-full h-full object-cover" alt="banner preview" />
+                  <img
+                    src={preview}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    alt="banner preview"
+                  />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-slate-400">
@@ -355,35 +377,41 @@ const AddBanner = () => {
                   </div>
                 )}
 
-                {/* Overlay */}
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: watchAlign === "right"
-                      ? "linear-gradient(to left, rgba(5,15,35,0.88) 0%, rgba(5,15,35,0.5) 50%, rgba(5,15,35,0.1) 100%)"
-                      : "linear-gradient(to right, rgba(5,15,35,0.88) 0%, rgba(5,15,35,0.5) 50%, rgba(5,15,35,0.1) 100%)",
+                    background:
+                      watchAlign === "right"
+                        ? "linear-gradient(to left, rgba(5,15,35,0.88) 0%, rgba(5,15,35,0.5) 50%, rgba(5,15,35,0.1) 100%)"
+                        : "linear-gradient(to right, rgba(5,15,35,0.88) 0%, rgba(5,15,35,0.5) 50%, rgba(5,15,35,0.1) 100%)",
                   }}
                 />
 
-                {/* Dot grid */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                  style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+                <div
+                  className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                  style={{
+                    backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
+                    backgroundSize: "28px 28px",
+                  }}
+                />
 
-                {/* Content */}
                 <div
                   className="absolute inset-0 flex items-center p-7"
                   style={{ justifyContent: watchAlign === "right" ? "flex-end" : "flex-start" }}
                 >
-                  <div className="text-white max-w-[75%]" style={{ textAlign: "left" }}>
-
-                    {/* Tag */}
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3"
-                      style={{ background: "rgba(14,165,233,0.2)", border: "1px solid rgba(14,165,233,0.4)", color: "#38bdf8" }}>
+                  <div className="text-white max-w-[75%]">
+                    <div
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3"
+                      style={{
+                        background: "rgba(14,165,233,0.2)",
+                        border: "1px solid rgba(14,165,233,0.4)",
+                        color: "#38bdf8",
+                      }}
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                       Laser Dental Point
                     </div>
 
-                    {/* Title */}
                     <h2
                       className="preview-text-shadow leading-tight mb-2"
                       style={{
@@ -393,25 +421,23 @@ const AddBanner = () => {
                         letterSpacing: "-0.02em",
                       }}
                     >
-                      {watchTitle || (
-                        <span className="text-white/30">Main Title</span>
-                      )}
+                      {watchTitle || <span className="text-white/30">Main Title</span>}
                       {watchTitle && <br />}
-                      <span style={{
-                        background: "linear-gradient(90deg, #38bdf8, #818cf8)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: watchAccent ? "transparent" : "rgba(255,255,255,0.2)",
-                      }}>
+                      <span
+                        style={{
+                          background: "linear-gradient(90deg, #38bdf8, #818cf8)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: watchAccent ? "transparent" : "rgba(255,255,255,0.2)",
+                        }}
+                      >
                         {watchAccent || "Accent Title"}
                       </span>
                     </h2>
 
-                    {/* Subtitle */}
                     <p className="text-white/60 text-xs leading-relaxed mb-4 preview-text-shadow line-clamp-3">
                       {watchSubtitle || "Subtitle will appear here..."}
                     </p>
 
-                    {/* Button */}
                     <div
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white"
                       style={{
@@ -421,14 +447,14 @@ const AddBanner = () => {
                     >
                       {watchBtnText || "Button Text"}
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
                       </svg>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Preview note */}
               <p className="text-xs text-slate-400 text-center mt-3">
                 This is a live preview of how the slide will look on your homepage.
               </p>
