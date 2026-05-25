@@ -13,7 +13,7 @@ const verifyToken = async (req, res, next) => {
     const decoded = await admin.auth().verifyIdToken(token);
 
     req.user = decoded; // 🔥 user info
-    console.log("from VerifyToken" , req.user?.email);
+    // console.log("from VerifyToken" , req.user?.email);
     next();
   } catch {
     res.status(401).send("Invalid token");

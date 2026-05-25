@@ -3,7 +3,7 @@ require("dotenv").config();
 const cors = require("cors");
 const jwt=require("jsonwebtoken");
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const verifyToken = require("./middleware/verifyToken");
 const verifyAdmin = require("./middleware/verifyAdmin");
 const port = process.env.PORT || 5000;
@@ -121,9 +121,10 @@ async function run() {
     }
   });
 
-  app.delete("/banners/:id",verifyToken,verifyAdmin, async (req, res) => {
+  app.delete("/banners/:id",verifyToken,verifyAdmin(userCollection), async (req, res) => {
+      console.log("Hello");
     try {
-      const id = req.params.id;
+      const id = req?.params?.id;
 
       const query = {
         _id: new ObjectId(id),
