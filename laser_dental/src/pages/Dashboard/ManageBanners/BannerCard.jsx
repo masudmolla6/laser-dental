@@ -8,9 +8,62 @@ import {
   AlignRight,
   Trash2,
 } from "lucide-react";
+import useAxiosSecure from "../../../hooks/useAxiosSecure";
+import Swal from "sweetalert2";
 
-const BannerCard = ({ banner, onDelete, onToggle, isDeleting, isToggling }) => {
-  const [imgError, setImgError] = useState(false);
+const BannerCard = ({ banner, refetch }) => {
+  const axiosSecure = useAxiosSecure();
+  const [imgError,   setImgError]   = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+
+  // ── Delete ───────────────────────────────────────────────────────────
+  const handleDelete = () => {
+    Swal.fire({
+      title: "Delete this banner?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Yes, delete it",
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
+      setIsDeleting(true);
+      try {
+        await axiosSecure.delete(`/banners/${banner._id}`);
+        refetch();
+        Swal.fire({
+          title: "Deleted!",
+          icon: "success",
+          confirmButtonColor: "#0ea5e9",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } catch (err) {
+        console.error("Delete error:", err);
+        Swal.fire("Error", err?.response?.data?.message || "Delete failed", "error");
+      } finally {
+        setIsDeleting(false);
+      }
+    });
+  };
+
+  // ── Toggle ───────────────────────────────────────────────────────────
+  const handleToggle = async () => {
+    setIsToggling(true);
+    try {
+      await axiosSecure.patch(`/banners/${banner._id}`, {
+        isActive: !banner.isActive,
+      });
+      refetch();
+    } catch (err) {
+      console.error("Toggle error:", err);
+      Swal.fire("Error", err?.response?.data?.message || "Toggle failed", "error");
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   return (
     <div
@@ -47,6 +100,7 @@ const BannerCard = ({ banner, onDelete, onToggle, isDeleting, isToggling }) => {
           }}
         />
 
+        {/* Status badge */}
         <div className="absolute top-3 left-3">
           <span
             className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
@@ -60,6 +114,7 @@ const BannerCard = ({ banner, onDelete, onToggle, isDeleting, isToggling }) => {
           </span>
         </div>
 
+        {/* Align badge */}
         <div className="absolute top-3 right-3">
           <span
             className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
@@ -120,7 +175,7 @@ const BannerCard = ({ banner, onDelete, onToggle, isDeleting, isToggling }) => {
         {/* Actions */}
         <div className="flex gap-2">
           <button
-            onClick={() => onToggle(banner)}
+            onClick={handleToggle}
             disabled={isToggling}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold border transition-all active:scale-95 disabled:opacity-50"
             style={
@@ -139,7 +194,7 @@ const BannerCard = ({ banner, onDelete, onToggle, isDeleting, isToggling }) => {
           </button>
 
           <button
-            onClick={() => onDelete(banner._id)}
+            onClick={handleDelete}
             disabled={isDeleting}
             className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border border-red-200 text-red-500 bg-red-50 hover:bg-red-100 transition-all active:scale-95 disabled:opacity-50"
           >

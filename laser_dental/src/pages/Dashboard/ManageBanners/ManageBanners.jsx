@@ -1,8 +1,5 @@
-import { useState } from "react";
 import { ImagePlus, Sparkles } from "lucide-react";
-import Swal from "sweetalert2";
 import useBanners from "../../../hooks/useBanners";
-import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import BannerCard from "./BannerCard";
 
 const EmptyState = () => (
@@ -17,59 +14,6 @@ const EmptyState = () => (
 
 const ManageBanners = () => {
   const [banners, isLoading, refetch] = useBanners();
-  const axiosSecure = useAxiosSecure();
-
-  const [deletingId, setDeletingId] = useState(null);
-  const [togglingId, setTogglingId] = useState(null);
-
-  // ── Delete ───────────────────────────────────────────────────────────
-  const handleDelete = (id) => {
-    Swal.fire({
-      title: "Delete this banner?",
-      text: "This action cannot be undone.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Yes, delete it",
-    }).then(async (result) => {
-      if (!result.isConfirmed) return;
-
-      setDeletingId(id);
-      try {
-        await axiosSecure.delete(`/banners/${id}`);
-        refetch();
-        Swal.fire({
-          title: "Deleted!",
-          icon: "success",
-          confirmButtonColor: "#0ea5e9",
-          timer: 1500,
-          showConfirmButton: false,
-        });
-      } catch (err) {
-        console.error("Delete error:", err);
-        Swal.fire("Error", err?.response?.data?.message || "Delete failed", "error");
-      } finally {
-        setDeletingId(null);
-      }
-    });
-  };
-
-  // ── Toggle ───────────────────────────────────────────────────────────
-  const handleToggle = async (banner) => {
-    setTogglingId(banner._id);
-    try {
-      await axiosSecure.patch(`/banners/${banner._id}`, {
-        isActive: !banner.isActive,
-      });
-      refetch();
-    } catch (err) {
-      console.error("Toggle error:", err);
-      Swal.fire("Error", err?.response?.data?.message || "Toggle failed", "error");
-    } finally {
-      setTogglingId(null);
-    }
-  };
 
   const activeCount   = banners.filter((b) => b.isActive).length;
   const inactiveCount = banners.length - activeCount;
@@ -103,7 +47,6 @@ const ManageBanners = () => {
             </p>
           </div>
 
-          {/* Stats */}
           <div className="flex items-center gap-3">
             {[
               { label: "Total",    value: banners.length, color: "#0ea5e9", bg: "#e0f2fe" },
@@ -124,7 +67,7 @@ const ManageBanners = () => {
           </div>
         </div>
 
-        {/* Card */}
+        {/* Content */}
         <div
           className="bg-white rounded-3xl overflow-hidden border border-slate-100"
           style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.06)" }}
@@ -157,10 +100,7 @@ const ManageBanners = () => {
                   <BannerCard
                     key={banner._id}
                     banner={banner}
-                    onDelete={handleDelete}
-                    onToggle={handleToggle}
-                    isDeleting={deletingId === banner._id}
-                    isToggling={togglingId === banner._id}
+                    refetch={refetch}
                   />
                 ))}
               </div>
