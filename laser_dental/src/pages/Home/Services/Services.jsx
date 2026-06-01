@@ -1,9 +1,20 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import {
+  Zap,
+  Anchor,
+  AlignCenter,
+  Sparkles,
+  HeartPulse,
+  Smile,
+  ArrowRight,
+  Clock,
+  Tag,
+} from "lucide-react";
 
 const SERVICES = [
   {
     id: 1,
-    icon: "✦",
+    Icon: Zap,
     category: "Cosmetic",
     title: "Laser Teeth Whitening",
     shortDesc: "Brighten your smile up to 8 shades in a single session.",
@@ -18,7 +29,7 @@ const SERVICES = [
   },
   {
     id: 2,
-    icon: "◈",
+    Icon: Anchor,
     category: "Restorative",
     title: "Dental Implants",
     shortDesc: "Permanent tooth replacement that looks and feels natural.",
@@ -33,7 +44,7 @@ const SERVICES = [
   },
   {
     id: 3,
-    icon: "◎",
+    Icon: AlignCenter,
     category: "Orthodontics",
     title: "Braces & Aligners",
     shortDesc: "Straighten your teeth with modern, comfortable solutions.",
@@ -48,7 +59,7 @@ const SERVICES = [
   },
   {
     id: 4,
-    icon: "⬡",
+    Icon: Sparkles,
     category: "Preventive",
     title: "Scaling & Polishing",
     shortDesc: "Professional cleaning for healthier gums and fresher breath.",
@@ -63,7 +74,7 @@ const SERVICES = [
   },
   {
     id: 5,
-    icon: "◇",
+    Icon: HeartPulse,
     category: "Restorative",
     title: "Root Canal Treatment",
     shortDesc: "Save your natural tooth from infection, painlessly.",
@@ -78,7 +89,7 @@ const SERVICES = [
   },
   {
     id: 6,
-    icon: "✿",
+    Icon: Smile,
     category: "Cosmetic",
     title: "Smile Makeover",
     shortDesc: "A complete transformation tailored to your face and goals.",
@@ -128,13 +139,14 @@ const ServiceCard = ({ service, index }) => {
         {/* Icon + tag row */}
         <div className="flex items-start justify-between">
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-transform duration-300"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-300"
             style={{
               backgroundColor: service.color,
+              color: service.accent,
               transform: hovered ? "scale(1.1) rotate(-5deg)" : "scale(1)",
             }}
           >
-            <span style={{ color: service.accent }}>{service.icon}</span>
+            {service.Icon && <service.Icon size={24} />}
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <span
@@ -183,8 +195,8 @@ const ServiceCard = ({ service, index }) => {
           style={{ borderTop: `1px solid ${hovered ? service.accent + "33" : "#f3f4f6"}` }}
         >
           <div>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-0.5">
-              Duration
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-0.5 flex items-center gap-1">
+              <Clock size={10} /> Duration
             </p>
             <p className="text-sm font-semibold text-gray-700">{service.duration}</p>
           </div>
@@ -205,13 +217,11 @@ const ServiceCard = ({ service, index }) => {
         style={{ opacity: hovered ? 1 : 0, transform: hovered ? "translateY(0)" : "translateY(8px)" }}
       >
         <button
-          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-95"
-          style={{
-            backgroundColor: service.accent,
-            color: "#fff",
-          }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 group"
+          style={{ backgroundColor: service.accent, color: "#fff" }}
         >
-          Book This Service →
+          Book This Service
+          <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
     </div>
@@ -356,12 +366,16 @@ const Services = () => {
               Walk in or call us — our team is here 6 days a week to help you feel comfortable and confident.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button className="px-8 py-3.5 bg-white text-[#0c4a6e] rounded-2xl font-bold text-sm hover:bg-blue-50 transition-colors duration-200 active:scale-95">
+              <a href="/appointment"
+                className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-[#0c4a6e] rounded-2xl font-bold text-sm hover:bg-blue-50 transition-colors duration-200 active:scale-95 group">
                 Book Appointment
-              </button>
-              <button className="px-8 py-3.5 border border-white/30 text-white rounded-2xl font-semibold text-sm hover:bg-white/10 transition-colors duration-200 active:scale-95">
-                📞 Call Us Now
-              </button>
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </a>
+              <a href="tel:01745565435"
+                className="inline-flex items-center gap-2 px-8 py-3.5 border border-white/30 text-white rounded-2xl font-semibold text-sm hover:bg-white/10 transition-colors duration-200 active:scale-95">
+                <Tag size={15} />
+                Call Us Now
+              </a>
             </div>
           </div>
         </div>
