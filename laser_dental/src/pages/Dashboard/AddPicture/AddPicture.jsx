@@ -115,7 +115,7 @@ const AddPicture = () => {
     const res = await axios.post(
       `https://api.imgbb.com/1/upload?key=${IMG_BB_KEY}`,
       formData,
-      { timeout: 20000 }
+      // { timeout: 20000 }
     );
     return res.data?.data?.display_url || "";
   };
@@ -151,6 +151,8 @@ const AddPicture = () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+
+      console.log(payload);
 
       await axiosSecure.post("/gallery", payload);
 
