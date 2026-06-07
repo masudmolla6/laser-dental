@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ArrowRight, Phone, MapPin, Star } from "lucide-react";
+import {
+  Check, ArrowRight, Phone, MapPin, Star,
+  MessageCircle, Zap
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 // ── Tooth SVG (lucide has no tooth icon) ──────────────────────────────────
@@ -9,13 +12,6 @@ const ToothIcon = ({ size = 40, opacity = 0.12, style = {} }) => (
       d="M32 4C22 4 14 10 14 20c0 5 2 9 4 13l4 20c1 4 4 7 10 7s9-3 10-7l4-20c2-4 4-8 4-13 0-10-8-16-18-16z"
       fill="currentColor"
     />
-  </svg>
-);
-
-// ── WhatsApp (not in lucide) ───────────────────────────────────────────────
-const WhatsAppIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
   </svg>
 );
 
@@ -68,11 +64,7 @@ const Hero = () => {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f8fafc] dark:bg-[#09111f]">
 
-      {/* ── Google Font ── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Sans:wght@300;400;500&display=swap');
-        .font-display { font-family: 'Playfair Display', serif; }
-        .font-body    { font-family: 'DM Sans', sans-serif; }
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50%       { transform: translateY(-18px) rotate(8deg); }
@@ -120,16 +112,18 @@ const Hero = () => {
         }
       `}</style>
 
-      {/* ── Background mesh & decorative shapes ── */}
+      {/* ── Background decorations ── */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Soft gradient blob top-right */}
-        <div className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 70%)" }} />
-        {/* Soft gradient blob bottom-left */}
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)" }} />
+        <div
+          className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 70%)" }}
+        />
+        <div
+          className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)" }}
+        />
 
-        {/* Decorative tooth icons */}
+        {/* Floating tooth decorations */}
         <div className="absolute top-16 left-[8%] text-sky-400 dark:text-sky-500 animate-float">
           <ToothIcon size={48} opacity={0.15} />
         </div>
@@ -143,16 +137,18 @@ const Hero = () => {
           <ToothIcon size={44} opacity={0.1} />
         </div>
 
-        {/* Geometric grid dots */}
-        <div className="absolute inset-0 opacity-[0.025]"
+        {/* Dot grid — radial gradient can't be done in pure Tailwind so kept as style */}
+        <div
+          className="absolute inset-0 opacity-[0.025]"
           style={{
             backgroundImage: "radial-gradient(circle, #0ea5e9 1px, transparent 1px)",
             backgroundSize: "40px 40px",
-          }} />
+          }}
+        />
       </div>
 
       {/* ── Main content ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-10 pt-20 pb-10 font-body">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-10 pt-20 pb-10">
 
         {/* ── Top badge ── */}
         <div className="flex justify-center" style={fadeUp(0)}>
@@ -172,8 +168,10 @@ const Hero = () => {
 
             {/* Headline */}
             <div style={fadeUp(100)}>
-              <h1 className="font-display text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.08] text-gray-900 dark:text-white"
-                style={{ letterSpacing: "-0.02em" }}>
+              <h1
+                className="font-display text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.08] text-gray-900 dark:text-white"
+                style={{ letterSpacing: "-0.02em" }}
+              >
                 Your Smile,
                 <br />
                 <span className="shimmer-text">Our Passion.</span>
@@ -198,7 +196,7 @@ const Hero = () => {
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3">
                   <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400">
-                    <Check size={16} />
+                    <Check size={12} strokeWidth={2.5} />
                   </div>
                   <span className="text-sm text-gray-600 dark:text-gray-300">{item}</span>
                 </div>
@@ -209,16 +207,10 @@ const Hero = () => {
             <div className="flex flex-col sm:flex-row gap-3 pt-2" style={fadeUp(400)}>
               <Link
                 to="/appointment"
-                className="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-white font-semibold text-sm transition-all duration-200 active:scale-95 group"
-                style={{
-                  background: "linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%)",
-                  boxShadow: "0 8px 28px -4px rgba(14,165,233,0.5)",
-                }}
+                className="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-white font-semibold text-sm transition-all duration-200 active:scale-95 group bg-gradient-to-br from-sky-600 to-sky-400 shadow-[0_8px_28px_-4px_rgba(14,165,233,0.5)]"
               >
                 Book Appointment
-                <span className="group-hover:translate-x-1 transition-transform duration-200">
-                  <ArrowRight size={18} />
-                </span>
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-200" />
               </Link>
 
               <a
@@ -227,7 +219,7 @@ const Hero = () => {
                 rel="noreferrer"
                 className="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl font-semibold text-sm border transition-all duration-200 active:scale-95 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
               >
-                <WhatsAppIcon />
+                <MessageCircle size={18} />
                 WhatsApp Us
               </a>
 
@@ -242,17 +234,17 @@ const Hero = () => {
 
             {/* Social proof strip */}
             <div className="flex items-center gap-4 pt-2" style={fadeUp(500)}>
-              {/* Avatar stack */}
               <div className="flex -space-x-2.5">
                 {[
-                  { bg: "#bfdbfe", text: "#1d4ed8", label: "RH" },
-                  { bg: "#bbf7d0", text: "#166534", label: "KA" },
-                  { bg: "#fce7f3", text: "#9d174d", label: "SB" },
-                  { bg: "#fef3c7", text: "#92400e", label: "NR" },
+                  { bg: "bg-blue-200",    text: "text-blue-800",    label: "RH" },
+                  { bg: "bg-emerald-200", text: "text-emerald-800", label: "KA" },
+                  { bg: "bg-pink-200",    text: "text-pink-800",    label: "SB" },
+                  { bg: "bg-amber-200",   text: "text-amber-800",   label: "NR" },
                 ].map((a) => (
-                  <div key={a.label}
-                    className="w-9 h-9 rounded-full border-2 border-white dark:border-[#09111f] flex items-center justify-center text-[11px] font-bold"
-                    style={{ backgroundColor: a.bg, color: a.text }}>
+                  <div
+                    key={a.label}
+                    className={`w-9 h-9 rounded-full border-2 border-white dark:border-[#09111f] flex items-center justify-center text-[11px] font-bold ${a.bg} ${a.text}`}
+                  >
                     {a.label}
                   </div>
                 ))}
@@ -260,9 +252,7 @@ const Hero = () => {
               <div>
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
+                    <Star key={i} size={13} fill="#f59e0b" color="#f59e0b" />
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -274,12 +264,11 @@ const Hero = () => {
 
           {/* ── Right: Visual column ── */}
           <div className="relative flex justify-center items-center" style={fadeUp(200)}>
-
-            {/* Main circle visual */}
             <div className="relative">
+
               {/* Outer pulse rings */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-72 h-72 md:w-96 md:h-96 rounded-full" style={{ position: "relative" }}>
+                <div className="w-72 h-72 md:w-96 md:h-96 rounded-full relative">
                   <div className="pulse-ring" style={{ animationDelay: "0s" }} />
                   <div className="pulse-ring" style={{ animationDelay: "1.1s" }} />
                 </div>
@@ -293,7 +282,6 @@ const Hero = () => {
                   boxShadow: "0 0 0 12px rgba(14,165,233,0.08), 0 40px 80px -20px rgba(14,165,233,0.25)",
                 }}
               >
-                {/* Big tooth center icon */}
                 <div className="text-sky-400" style={{ opacity: 0.35 }}>
                   <ToothIcon size={160} opacity={1} />
                 </div>
@@ -301,8 +289,7 @@ const Hero = () => {
                 {/* Clinic name overlay */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
-                      style={{ background: "linear-gradient(135deg, #0284c7, #6366f1)" }}>
+                    <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-gradient-to-br from-sky-600 to-indigo-500">
                       <ToothIcon size={36} opacity={1} style={{ color: "#fff" }} />
                     </div>
                     <p className="font-display text-lg font-bold text-gray-800 leading-tight">
@@ -319,48 +306,40 @@ const Hero = () => {
               </div>
 
               {/* Floating card: Doctor info */}
-              <div
-                className="absolute -left-8 md:-left-16 top-10 glass border border-white/60 dark:border-white/10 rounded-2xl px-4 py-3.5 shadow-xl card-hover"
-                style={{ minWidth: "160px" }}
-              >
+              <div className="absolute -left-8 md:-left-16 top-10 glass border border-white/60 dark:border-white/10 rounded-2xl px-4 py-3.5 shadow-xl card-hover min-w-[160px]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg, #0284c7, #6366f1)" }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0 bg-gradient-to-br from-sky-600 to-indigo-500">
                     Dr
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-800 dark:text-white leading-tight">Dr. [Name]</p>
+                    <p className="text-xs font-semibold text-gray-800 dark:text-white leading-tight">Dr. Fatema</p>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400">BDS, FCPS</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 mt-2.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
                   <span className="text-[10px] text-gray-500 dark:text-gray-400">Available today</span>
                 </div>
               </div>
 
-              {/* Floating card: Laser badge */}
-              <div
-                className="absolute -right-6 md:-right-14 top-16 glass border border-white/60 dark:border-white/10 rounded-2xl px-4 py-3 shadow-xl card-hover"
-                style={{ animationDelay: "0.5s" }}
-              >
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium mb-1">Technology</p>
+              {/* Floating card: Laser — lucide Zap icon */}
+              <div className="absolute -right-6 md:-right-14 top-16 glass border border-white/60 dark:border-white/10 rounded-2xl px-4 py-3 shadow-xl card-hover">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Zap size={12} className="text-sky-500" strokeWidth={2.5} />
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">Technology</p>
+                </div>
                 <p className="text-sm font-bold text-sky-600 dark:text-sky-400">Laser Assisted</p>
                 <p className="text-[10px] text-gray-400 mt-0.5">Painless treatments</p>
               </div>
 
               {/* Floating card: Rating */}
-              <div
-                className="absolute -bottom-4 left-1/2 -translate-x-1/2 glass border border-white/60 dark:border-white/10 rounded-2xl px-5 py-3 shadow-xl card-hover"
-              >
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 glass border border-white/60 dark:border-white/10 rounded-2xl px-5 py-3 shadow-xl card-hover">
                 <div className="flex items-center gap-3">
                   <div>
                     <p className="text-xl font-bold text-gray-900 dark:text-white font-display">4.9</p>
                     <div className="flex gap-0.5 mt-0.5">
                       {[...Array(5)].map((_, i) => (
-                        <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill="#f59e0b">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
+                        <Star key={i} size={10} fill="#f59e0b" color="#f59e0b" />
                       ))}
                     </div>
                   </div>
@@ -383,10 +362,10 @@ const Hero = () => {
           >
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 divide-y-2 md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800">
               {[
-                { target: 15, suffix: "+", label: "Years of Excellence", sub: "Trusted since 2010" },
-                { target: 1200, suffix: "+", label: "Happy Patients", sub: "Across Dhaka" },
-                { target: 98, suffix: "%", label: "Success Rate", sub: "Clinically verified" },
-                { target: 2, suffix: "", label: "Locations", sub: "Dhaka, Bangladesh" },
+                { target: 15,   suffix: "+", label: "Years of Excellence", sub: "Trusted since 2010" },
+                { target: 1200, suffix: "+", label: "Happy Patients",      sub: "Across Dhaka" },
+                { target: 98,   suffix: "%", label: "Success Rate",        sub: "Clinically verified" },
+                { target: 2,    suffix: "",  label: "Locations",           sub: "Dhaka, Bangladesh" },
               ].map(({ target, suffix, label, sub }, i) => (
                 <div key={label} className="flex flex-col items-center text-center py-2 md:py-0 md:px-6 first:pt-0 last:pb-0 md:first:pl-0 md:last:pr-0">
                   <span
@@ -406,17 +385,14 @@ const Hero = () => {
         {/* ── Quick location strip ── */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3" style={fadeUp(700)}>
           {[
-            { branch: "Branch 1", area: "Location TBD, Dhaka", time: "Sat – Thu: 10am – 8pm" },
-            { branch: "Branch 2", area: "Location TBD, Dhaka", time: "Sat – Thu: 3pm – 9pm" },
+            { branch: "Branch 1", area: "Mirpur-10, Dhaka", time: "Sat – Thu: 10am – 9pm" },
+            { branch: "Branch 2", area: "Uttara, Dhaka",    time: "Sat – Thu: 3pm – 9pm" },
           ].map((loc) => (
             <div
               key={loc.branch}
               className="flex-1 glass border border-white/60 dark:border-white/10 rounded-2xl px-5 py-4 flex items-center gap-4 shadow-sm card-hover"
             >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white"
-                style={{ background: "linear-gradient(135deg, #0284c7, #6366f1)" }}
-              >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white bg-gradient-to-br from-sky-600 to-indigo-500">
                 <MapPin size={18} />
               </div>
               <div className="min-w-0">
