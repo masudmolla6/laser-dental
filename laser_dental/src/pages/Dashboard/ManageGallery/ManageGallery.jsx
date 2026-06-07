@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import {
   Trash2, Pencil, Eye, EyeOff, Search, Filter,
   ImagePlus, Loader2, X, Check, ChevronDown,
-  LayoutGrid, List, Sparkles, AlertTriangle,
+  LayoutGrid, List, Sparkles,
   Tag, User, Clock, RefreshCw, Package
 } from "lucide-react";
 import Swal from "sweetalert2";
+import useGallerySecure from "../../../hooks/useGallerySecure";
 
-// ── Status badge ─────────────────────────────────────────────────────────
+// ── Status badge ──────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => (
   <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
     status === "published"
@@ -31,11 +32,11 @@ const CatBadge = ({ cat }) => (
 // ── Edit Modal ────────────────────────────────────────────────────────────
 const EditModal = ({ item, onClose, onSave, saving }) => {
   const [form, setForm] = useState({
-    title:       item.title       || "",
-    category:    item.category    || "",
-    description: item.description || "",
-    status:      item.status      || "published",
-    tags:        Array.isArray(item.tags) ? item.tags.join(", ") : (item.tags || ""),
+    title:                    item.title                    || "",
+    category:                 item.category                 || "",
+    description:              item.description              || "",
+    status:                   item.status                   || "published",
+    tags:                     Array.isArray(item.tags) ? item.tags.join(", ") : (item.tags || ""),
     "treatmentInfo.name":     item.treatmentInfo?.name     || "",
     "treatmentInfo.duration": item.treatmentInfo?.duration || "",
     "treatmentInfo.sessions": item.treatmentInfo?.sessions || "",
@@ -70,15 +71,10 @@ const EditModal = ({ item, onClose, onSave, saving }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Modal */}
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Top bar */}
         <div className="h-1 w-full bg-gradient-to-r from-sky-500 via-violet-500 to-emerald-500" />
 
-        {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-slate-100">
           <div>
             <h3 className="font-display font-bold text-slate-800 text-lg">Edit Case Study</h3>
@@ -89,10 +85,8 @@ const EditModal = ({ item, onClose, onSave, saving }) => {
           </button>
         </div>
 
-        {/* Body */}
         <div className="overflow-y-auto p-7 flex flex-col gap-5">
-
-          {/* Image preview row */}
+          {/* Image previews */}
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: "Main",   src: item.images?.main,   dot: "bg-sky-400"     },
@@ -107,9 +101,7 @@ const EditModal = ({ item, onClose, onSave, saving }) => {
                 {src ? (
                   <img src={src} alt={label} className="w-full h-24 object-cover" />
                 ) : (
-                  <div className="h-24 flex items-center justify-center text-slate-200">
-                    <ImagePlus size={20} />
-                  </div>
+                  <div className="h-24 flex items-center justify-center text-slate-200"><ImagePlus size={20} /></div>
                 )}
               </div>
             ))}
@@ -192,7 +184,6 @@ const EditModal = ({ item, onClose, onSave, saving }) => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex gap-3 px-7 py-5 border-t border-slate-100 bg-slate-50">
           <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-semibold border border-slate-200 text-slate-500 hover:bg-slate-100 transition-colors">
             Cancel
@@ -210,7 +201,7 @@ const EditModal = ({ item, onClose, onSave, saving }) => {
   );
 };
 
-// ── Image preview modal ───────────────────────────────────────────────────
+// ── Preview Modal ─────────────────────────────────────────────────────────
 const PreviewModal = ({ item, onClose }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
@@ -229,11 +220,9 @@ const PreviewModal = ({ item, onClose }) => (
         </button>
       </div>
       <div className="p-5 flex flex-col gap-4">
-        {/* Main image */}
         {item.images?.main && (
           <img src={item.images.main} alt="main" className="w-full h-52 object-cover rounded-2xl" />
         )}
-        {/* Before / After */}
         <div className="grid grid-cols-2 gap-3">
           {[{ label: "Before", src: item.images?.before }, { label: "After", src: item.images?.after }].map(({ label, src }) => (
             <div key={label} className="rounded-xl overflow-hidden border border-slate-100">
@@ -246,20 +235,17 @@ const PreviewModal = ({ item, onClose }) => (
             </div>
           ))}
         </div>
-        {/* Info */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-50 rounded-xl p-3">
             <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Patient</p>
-            <p className="text-slate-700 font-medium">{item.patientInfo?.gender}, {item.patientInfo?.age} yrs</p>
+            <p className="text-sm text-slate-700 font-medium">{item.patientInfo?.gender}, {item.patientInfo?.age} yrs</p>
           </div>
           <div className="bg-slate-50 rounded-xl p-3">
             <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Treatment</p>
-            <p className="text-slate-700 font-medium">{item.treatmentInfo?.name || "—"}</p>
+            <p className="text-sm text-slate-700 font-medium">{item.treatmentInfo?.name || "—"}</p>
           </div>
         </div>
-        {item.description && (
-          <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>
-        )}
+        {item.description && <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>}
         {item.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {item.tags.map((t) => (
@@ -277,24 +263,18 @@ const ManageGallery = () => {
   const axiosSecure  = useAxiosSecure();
   const queryClient  = useQueryClient();
 
-  const [search,     setSearch]     = useState("");
-  const [filterCat,  setFilterCat]  = useState("");
-  const [filterStat, setFilterStat] = useState("");
-  const [viewMode,   setViewMode]   = useState("grid"); // grid | list
-  const [editItem,   setEditItem]   = useState(null);
-  const [previewItem,setPreviewItem]= useState(null);
-  const [saving,     setSaving]     = useState(false);
+  const [search,      setSearch]      = useState("");
+  const [filterCat,   setFilterCat]   = useState("");
+  const [filterStat,  setFilterStat]  = useState("");
+  const [viewMode,    setViewMode]    = useState("grid");
+  const [editItem,    setEditItem]    = useState(null);
+  const [previewItem, setPreviewItem] = useState(null);
+  const [saving,      setSaving]      = useState(false);
 
-  // ── Fetch all (admin — includes drafts) ──────────────────────────────
-  const { data: gallery = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin-gallery"],
-    queryFn: async () => {
-      const res = await axiosSecure.get("/admin/gallery");
-      return res.data.gallery;
-    },
-  });
+  // ✅ useGallerySecure: /admin/gallery, queryKey: ["admin-gallery"]
+  const [gallery, isLoading, refetch] = useGallerySecure();
 
-  // ── Delete mutation ───────────────────────────────────────────────────
+  // ── Delete ────────────────────────────────────────────────────────────
   const deleteMutation = useMutation({
     mutationFn: (id) => axiosSecure.delete(`/gallery/${id}`),
     onSuccess: () => {
@@ -304,13 +284,13 @@ const ManageGallery = () => {
     onError: () => Swal.fire("Error", "Failed to delete", "error"),
   });
 
-  // ── Status toggle mutation ────────────────────────────────────────────
+  // ── Status toggle ─────────────────────────────────────────────────────
   const toggleStatus = useMutation({
     mutationFn: ({ id, status }) => axiosSecure.patch(`/gallery/${id}`, { status }),
     onSuccess: () => queryClient.invalidateQueries(["admin-gallery"]),
   });
 
-  // ── Update mutation ───────────────────────────────────────────────────
+  // ── Update ────────────────────────────────────────────────────────────
   const updateMutation = async (id, payload) => {
     setSaving(true);
     try {
@@ -338,9 +318,9 @@ const ManageGallery = () => {
     }).then((r) => { if (r.isConfirmed) deleteMutation.mutate(id); });
   };
 
-  // ── Filtered list ─────────────────────────────────────────────────────
+  // ── Filter ────────────────────────────────────────────────────────────
   const filtered = gallery.filter((item) => {
-    const matchSearch = !search || item.title?.toLowerCase().includes(search.toLowerCase()) || item.category?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search     || item.title?.toLowerCase().includes(search.toLowerCase()) || item.category?.toLowerCase().includes(search.toLowerCase());
     const matchCat    = !filterCat  || item.category === filterCat;
     const matchStat   = !filterStat || item.status   === filterStat;
     return matchSearch && matchCat && matchStat;
@@ -348,7 +328,6 @@ const ManageGallery = () => {
 
   const categories = [...new Set(gallery.map((g) => g.category).filter(Boolean))];
 
-  // ── Stats ─────────────────────────────────────────────────────────────
   const stats = {
     total:     gallery.length,
     published: gallery.filter((g) => g.status === "published").length,
@@ -377,12 +356,12 @@ const ManageGallery = () => {
           </button>
         </div>
 
-        {/* ── Stats cards ── */}
+        {/* ── Stats ── */}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: "Total Cases",  value: stats.total,     color: "from-sky-500 to-indigo-500",    bg: "bg-sky-50",     text: "text-sky-600"     },
-            { label: "Published",    value: stats.published, color: "from-emerald-500 to-teal-500",  bg: "bg-emerald-50", text: "text-emerald-600" },
-            { label: "Drafts",       value: stats.draft,     color: "from-amber-400 to-orange-400",  bg: "bg-amber-50",   text: "text-amber-600"   },
+            { label: "Total Cases", value: stats.total,     color: "from-sky-500 to-indigo-500",   bg: "bg-sky-50",     text: "text-sky-600"     },
+            { label: "Published",   value: stats.published, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-50", text: "text-emerald-600" },
+            { label: "Drafts",      value: stats.draft,     color: "from-amber-400 to-orange-400", bg: "bg-amber-50",   text: "text-amber-600"   },
           ].map(({ label, value, color, bg, text }) => (
             <div key={label} className={`rounded-2xl p-5 ${bg} border border-white shadow-sm flex items-center gap-4`}>
               <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0`}>
@@ -398,7 +377,6 @@ const ManageGallery = () => {
 
         {/* ── Toolbar ── */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-wrap items-center gap-3">
-          {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -414,7 +392,6 @@ const ManageGallery = () => {
             )}
           </div>
 
-          {/* Category filter */}
           <div className="relative">
             <Filter size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <select
@@ -428,12 +405,11 @@ const ManageGallery = () => {
             <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
-          {/* Status filter */}
           <div className="relative">
             <select
               value={filterStat}
               onChange={(e) => setFilterStat(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 outline-none focus:border-sky-400 transition-all cursor-pointer appearance-none pr-8"
+              className="px-4 pr-8 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 outline-none focus:border-sky-400 transition-all cursor-pointer appearance-none"
             >
               <option value="">All Status</option>
               <option value="published">Published</option>
@@ -442,7 +418,6 @@ const ManageGallery = () => {
             <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
 
-          {/* View toggle */}
           <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1 ml-auto">
             <button
               onClick={() => setViewMode("grid")}
@@ -459,12 +434,11 @@ const ManageGallery = () => {
           </div>
         </div>
 
-        {/* ── Results count ── */}
-        <div className="flex items-center justify-between -mt-3">
-          <p className="text-sm text-slate-400">
-            Showing <span className="font-semibold text-slate-600">{filtered.length}</span> of <span className="font-semibold text-slate-600">{gallery.length}</span> case studies
-          </p>
-        </div>
+        {/* ── Result count ── */}
+        <p className="text-sm text-slate-400 -mt-3">
+          Showing <span className="font-semibold text-slate-600">{filtered.length}</span> of{" "}
+          <span className="font-semibold text-slate-600">{gallery.length}</span> case studies
+        </p>
 
         {/* ── Loading ── */}
         {isLoading && (
@@ -495,46 +469,26 @@ const ManageGallery = () => {
                 key={item._id}
                 className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all duration-300"
               >
-                {/* Image */}
                 <div className="relative h-44 overflow-hidden bg-slate-100">
                   {item.images?.main ? (
                     <img src={item.images.main} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-200">
-                      <ImagePlus size={32} />
-                    </div>
+                    <div className="w-full h-full flex items-center justify-center text-slate-200"><ImagePlus size={32} /></div>
                   )}
-                  {/* Overlay actions */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => setPreviewItem(item)}
-                      className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center text-white transition-colors"
-                      title="Preview"
-                    >
+                    <button onClick={() => setPreviewItem(item)} className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center text-white transition-colors" title="Preview">
                       <Eye size={15} />
                     </button>
-                    <button
-                      onClick={() => setEditItem(item)}
-                      className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center text-white transition-colors"
-                      title="Edit"
-                    >
+                    <button onClick={() => setEditItem(item)} className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center text-white transition-colors" title="Edit">
                       <Pencil size={15} />
                     </button>
-                    <button
-                      onClick={() => handleDelete(item._id, item.title)}
-                      className="w-9 h-9 rounded-xl bg-red-500/80 backdrop-blur-sm hover:bg-red-600/80 flex items-center justify-center text-white transition-colors"
-                      title="Delete"
-                    >
+                    <button onClick={() => handleDelete(item._id, item.title)} className="w-9 h-9 rounded-xl bg-red-500/80 backdrop-blur-sm hover:bg-red-600/80 flex items-center justify-center text-white transition-colors" title="Delete">
                       <Trash2 size={15} />
                     </button>
                   </div>
-                  {/* Status badge */}
-                  <div className="absolute top-3 left-3">
-                    <StatusBadge status={item.status} />
-                  </div>
+                  <div className="absolute top-3 left-3"><StatusBadge status={item.status} /></div>
                 </div>
 
-                {/* Card body */}
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3 className="font-semibold text-slate-800 text-sm leading-tight line-clamp-1">{item.title}</h3>
@@ -542,7 +496,6 @@ const ManageGallery = () => {
                   </div>
                   <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">{item.description || "No description provided."}</p>
 
-                  {/* Before/After thumbnails */}
                   <div className="flex gap-2 mb-4">
                     {[{ src: item.images?.before, label: "Before" }, { src: item.images?.after, label: "After" }].map(({ src, label }) => (
                       <div key={label} className="flex-1 rounded-xl overflow-hidden border border-slate-100 h-16">
@@ -555,7 +508,6 @@ const ManageGallery = () => {
                     ))}
                   </div>
 
-                  {/* Actions row */}
                   <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
                     <button
                       onClick={() => toggleStatus.mutate({ id: item._id, status: item.status === "published" ? "draft" : "published" })}
@@ -567,16 +519,10 @@ const ManageGallery = () => {
                     >
                       {item.status === "published" ? <><EyeOff size={11} /> Unpublish</> : <><Eye size={11} /> Publish</>}
                     </button>
-                    <button
-                      onClick={() => setEditItem(item)}
-                      className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
-                    >
+                    <button onClick={() => setEditItem(item)} className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors">
                       <Pencil size={11} /> Edit
                     </button>
-                    <button
-                      onClick={() => handleDelete(item._id, item.title)}
-                      className="ml-auto flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                    >
+                    <button onClick={() => handleDelete(item._id, item.title)} className="ml-auto flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
                       <Trash2 size={11} /> Delete
                     </button>
                   </div>
@@ -589,7 +535,6 @@ const ManageGallery = () => {
         {/* ── LIST VIEW ── */}
         {!isLoading && filtered.length > 0 && viewMode === "list" && (
           <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-            {/* Table header */}
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3.5 border-b border-slate-100 bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               <span>Case Study</span>
               <span>Category</span>
@@ -603,15 +548,12 @@ const ManageGallery = () => {
                 key={item._id}
                 className={`grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 items-center hover:bg-slate-50 transition-colors ${idx !== filtered.length - 1 ? "border-b border-slate-100" : ""}`}
               >
-                {/* Title + image */}
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-12 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
                     {item.images?.main ? (
                       <img src={item.images.main} alt={item.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-200">
-                        <ImagePlus size={14} />
-                      </div>
+                      <div className="w-full h-full flex items-center justify-center text-slate-200"><ImagePlus size={14} /></div>
                     )}
                   </div>
                   <div className="min-w-0">
@@ -620,19 +562,14 @@ const ManageGallery = () => {
                   </div>
                 </div>
 
-                {/* Category */}
                 <div><CatBadge cat={item.category} /></div>
-
-                {/* Status */}
                 <div><StatusBadge status={item.status} /></div>
 
-                {/* Treatment */}
                 <div>
                   <p className="text-xs font-medium text-slate-600 truncate">{item.treatmentInfo?.name || "—"}</p>
                   <p className="text-[10px] text-slate-400">{item.treatmentInfo?.sessions ? `${item.treatmentInfo.sessions} sessions` : ""}</p>
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-1.5">
                   <button onClick={() => setPreviewItem(item)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors" title="Preview">
                     <Eye size={13} />
@@ -642,7 +579,11 @@ const ManageGallery = () => {
                   </button>
                   <button
                     onClick={() => toggleStatus.mutate({ id: item._id, status: item.status === "published" ? "draft" : "published" })}
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${item.status === "published" ? "bg-amber-100 hover:bg-amber-200 text-amber-600" : "bg-emerald-100 hover:bg-emerald-200 text-emerald-600"}`}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                      item.status === "published"
+                        ? "bg-amber-100 hover:bg-amber-200 text-amber-600"
+                        : "bg-emerald-100 hover:bg-emerald-200 text-emerald-600"
+                    }`}
                     title={item.status === "published" ? "Unpublish" : "Publish"}
                   >
                     {item.status === "published" ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -658,7 +599,7 @@ const ManageGallery = () => {
       </div>
 
       {/* ── Modals ── */}
-      {editItem    && <EditModal item={editItem}    onClose={() => setEditItem(null)}    onSave={(payload) => updateMutation(editItem._id, payload)} saving={saving} />}
+      {editItem    && <EditModal item={editItem} onClose={() => setEditItem(null)} onSave={(p) => updateMutation(editItem._id, p)} saving={saving} />}
       {previewItem && <PreviewModal item={previewItem} onClose={() => setPreviewItem(null)} />}
     </div>
   );

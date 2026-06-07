@@ -1,6 +1,7 @@
 import { ImagePlus, Sparkles } from "lucide-react";
 import useBanners from "../../../hooks/useBanners";
 import BannerCard from "./BannerCard";
+import useGallery from "../../../hooks/useGallery";
 
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-20 text-center">

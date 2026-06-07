@@ -1,6 +1,7 @@
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
 import { Link } from "react-router-dom";
+import useGallerySecure from "../../../hooks/useGallerySecure";
 
 const SLIDES = [
   {
@@ -62,6 +63,7 @@ const SLIDES = [
 ];
 
 const Banner = () => {
+
   return (
     <div className="w-full">
       <style>{`

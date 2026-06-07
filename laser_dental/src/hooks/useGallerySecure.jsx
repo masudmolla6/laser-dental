@@ -1,8 +1,8 @@
-// useGallerySecure.js — Dashboard (admin এর জন্য)
+// useGallerySecure.js
 import useAxiosSecure from './useAxiosSecure';
 import { useQuery } from '@tanstack/react-query';
 
-const useGallerySecure = (category = "", status = "") => {
+const useGallerySecure = () => {
   const axiosSecure = useAxiosSecure();
 
   const {
@@ -11,13 +11,9 @@ const useGallerySecure = (category = "", status = "") => {
     refetch,
     error,
   } = useQuery({
-    queryKey: ["gallery-secure", category, status],
+    queryKey: ["admin-gallery"],
     queryFn: async () => {
-      const params = {};
-      if (category) params.category = category;
-      if (status) params.status = status;
-
-      const res = await axiosSecure.get("/gallery", { params });
+      const res = await axiosSecure.get("/admin/gallery");
       return res.data.gallery;
     },
   });
