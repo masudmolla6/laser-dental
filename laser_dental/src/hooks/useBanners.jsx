@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import useAxiosSecure from "./useAxiosSecure";
+// useBanners.js — Public (Home page এর জন্য)
+import useAxiosPublic from './useAxiosPublic';
+import { useQuery } from '@tanstack/react-query';
 
 const useBanners = () => {
-  const axiosSecure = useAxiosSecure();
+  const axiosPublic = useAxiosPublic();
 
   const {
     data: banners = [],
@@ -10,14 +11,9 @@ const useBanners = () => {
     refetch,
     error,
   } = useQuery({
-    queryKey: ["banners"],
-
+    queryKey: ["banners-public"],
     queryFn: async () => {
-      const res = await axiosSecure.get("/banners");
-
-      // because backend returns:
-      // { success: true, banners: result }
-
+      const res = await axiosPublic.get("/banners/public");
       return res.data.banners;
     },
   });

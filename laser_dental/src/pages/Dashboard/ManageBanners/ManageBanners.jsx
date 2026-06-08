@@ -1,7 +1,7 @@
 import { ImagePlus, Sparkles } from "lucide-react";
-import useBanners from "../../../hooks/useBanners";
 import BannerCard from "./BannerCard";
 import useGallery from "../../../hooks/useGallery";
+import useBannersSecure from "../../../hooks/useBannersSecure";
 
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -14,7 +14,7 @@ const EmptyState = () => (
 );
 
 const ManageBanners = () => {
-  const [banners, isLoading, refetch] = useBanners();
+  const [banners, isLoading, refetch] = useBannersSecure();
 
   const activeCount   = banners.filter((b) => b.isActive).length;
   const inactiveCount = banners.length - activeCount;
