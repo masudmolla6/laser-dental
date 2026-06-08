@@ -82,6 +82,7 @@ const adminGroups = [
     label: "Appointments",
     links: [
       {
+        
         name: "Manage Appointments",
         path: "/dashboard/manageAppointments",
         Icon: CalendarCheck,

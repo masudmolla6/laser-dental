@@ -14,6 +14,10 @@ import ManageGallery from "../pages/Dashboard/ManageGallery/ManageGallery";
 import PrivateRoute from "../routes/PrivateRoute";
 import AdminRoute from "../routes/AdminRoute";
 import ManageBanners from "../pages/Dashboard/ManageBanners/ManageBanners";
+import AdminProfile from "../pages/Dashboard/AdminProfile/AdminProfile";
+import ManageAppointments from "../pages/Dashboard/ManageAppointments/ManageAppointments";
+import ManageReviews from "../pages/Dashboard/ManageReviews/ManageReviews";
+import ManageServices from "../pages/Dashboard/ManageServices/ManageServices";
 
 const router=createBrowserRouter([
     {
@@ -71,6 +75,21 @@ const router=createBrowserRouter([
             {
                 path:"manageGallery",
                 element:<ManageGallery></ManageGallery>
+            },
+            {
+                path:"manageAppointments",
+                element:<ManageAppointments></ManageAppointments>
+            },{
+                path:"manageReviews",
+                element:<ManageReviews></ManageReviews>
+            },
+            {
+                path:"manageServices",
+                element:<ManageServices></ManageServices>
+            },
+            {
+                path: "adminProfile",
+                element:<AdminProfile></AdminProfile>
             }
         ]
     }
