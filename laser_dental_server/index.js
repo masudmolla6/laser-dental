@@ -84,6 +84,17 @@ async function run() {
     // ══════════════════════════════════════════════════════════════════
     // BANNER ROUTES
     // ══════════════════════════════════════════════════════════════════
+
+    // Public — website এর জন্য (active banners only)
+    app.get("/banners/public", async (req, res) => {
+      const result = await bannersCollection
+        .find({ isActive: true })
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send({ success: true, banners: result });
+    });
+
+
     app.get("/banners", verifyToken, verifyAdmin(userCollection), async (req, res) => {
       try {
         const result = await bannersCollection.find().sort({ createdAt: -1 }).toArray();
