@@ -32,6 +32,7 @@ async function run() {
     const userCollection    = client.db("Laser_Dental").collection("users");
     const bannersCollection = client.db("Laser_Dental").collection("banners");
     const galleryCollection = client.db("Laser_Dental").collection("gallery");
+    const appointmentsCollection = client.db("Laser_Dental").collection("appointments");
 
     // ── Test route ─────────────────────────────────────────────────────
     app.get("/secure", verifyToken, (req, res) => {
@@ -284,6 +285,8 @@ async function run() {
     app.post("/appointments", async (req, res) => {
       try {
         const data = req.body;
+
+        // console.log(data);
 
         // Validation
         if (!data.name || !data.phone || !data.service || !data.location || !data.date || !data.time) {
