@@ -274,6 +274,133 @@ async function run() {
       }
     });
 
+
+
+    // ══════════════════════════════════════════════════════════════════
+    // APPOINTMENT ROUTES
+    // ══════════════════════════════════════════════════════════════════
+
+    // POST — public (anyone can book without account)
+    app.post("/appointments", async (req, res) => {
+      try {
+        const data = req.body;
+
+        // Validation
+        if (!data.name || !data.phone || !data.service || !data.location || !data.date || !data.time) {
+          return res.status(400).send({
+            success: false,
+            message: "Name, phone, service, location, date and time are required",
+          });
+        }
+
+        const appointment = {
+          name:      data.name.trim(),
+          phone:     data.phone.trim(),
+          service:   data.service,
+          location:  data.location,   // "branch1" | "branch2"
+          date:      data.date,       // "YYYY-MM-DD"
+          time:      data.time,       // "10:00 AM"
+          message:   data.message?.trim() || "",
+          status:    "pending",       // pending | confirmed | completed | cancelled
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        const result = await appointmentsCollection.insertOne(appointment);
+
+        res.send({
+          success: true,
+          message: "Appointment booked successfully",
+          insertedId: result.insertedId,
+        });
+      } catch (error) {
+        console.error("POST /appointments:", error);
+        res.status(500).send({ success: false, message: "Failed to book appointment" });
+      }
+    });
+
+    // GET all — admin only
+    app.get("/appointments", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const { status, location, date } = req.query;
+        const filter = {};
+        if (status)   filter.status   = status;
+        if (location) filter.location = location;
+        if (date)     filter.date     = date;
+
+        const result = await appointmentsCollection
+          .find(filter)
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send({ success: true, appointments: result, total: result.length });
+      } catch (error) {
+        console.error("GET /appointments:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch appointments" });
+      }
+    });
+
+    // GET single by ID — admin only
+    app.get("/appointments/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id = req.params.id;
+        const item = await appointmentsCollection.findOne({ _id: new ObjectId(id) });
+        if (!item) return res.status(404).send({ success: false, message: "Appointment not found" });
+        res.send({ success: true, appointment: item });
+      } catch (error) {
+        console.error("GET /appointments/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch appointment" });
+      }
+    });
+
+    // PATCH — update status or details — admin only
+    app.patch("/appointments/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const update = req.body;
+        delete update._id;
+        update.updatedAt = new Date();
+
+        const result = await appointmentsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: update }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ success: false, message: "Appointment not found" });
+        }
+
+        res.send({
+          success: true,
+          message: "Appointment updated",
+          modifiedCount: result.modifiedCount,
+        });
+      } catch (error) {
+        console.error("PATCH /appointments/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to update appointment" });
+      }
+    });
+
+    // DELETE — admin only
+    app.delete("/appointments/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const result = await appointmentsCollection.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ success: false, message: "Appointment not found" });
+        }
+
+        res.send({ success: true, message: "Appointment deleted successfully" });
+      } catch (error) {
+        console.error("DELETE /appointments/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to delete appointment" });
+      }
+    });
+
+
+
+
   } finally {
     // await client.close();
   }
