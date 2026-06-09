@@ -9,7 +9,7 @@ import {
   Sparkles, X, Eye, Package
 } from "lucide-react";
 import Swal from "sweetalert2";
-import useAppointmentsSecure from "../../../hooks/useAppointmentsSecure,jsx";
+import useAppointmentsSecure from "../../../hooks/useAppointmentsSecure";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 const STATUSES = ["pending", "confirmed", "completed", "cancelled"];
@@ -151,6 +151,7 @@ const ManageAppointments = () => {
   const [search,         setSearch]         = useState("");
   const [selectedItem,   setSelectedItem]   = useState(null);
   const [updating,       setUpdating]       = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // appt._id store করবে
 
   // ── Fetch ─────────────────────────────────────────────────────────────
   const [appointments, isLoading, refetch] = useAppointmentsSecure({
@@ -339,7 +340,7 @@ const ManageAppointments = () => {
 
         {/* ── Table ── */}
         {!isLoading && filtered.length > 0 && (
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-visible">
             {/* Table header */}
             <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3.5 border-b border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
               <span>Patient</span>
@@ -402,30 +403,48 @@ const ManageAppointments = () => {
                     <Eye size={13} />
                   </button>
 
-                  {/* Quick status dropdown */}
-                  <div className="relative group">
-                    <button
-                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"
-                      title="Change Status"
-                    >
-                      <ChevronDown size={13} />
-                    </button>
-                    <div className="absolute right-0 top-full mt-1 bg-white rounded-xl border border-slate-200 shadow-lg z-20 overflow-hidden hidden group-hover:block min-w-[130px]">
-                      {STATUSES.filter((s) => s !== appt.status).map((s) => {
+                {/* Quick status dropdown */}
+                <div className="relative">
+                <button
+                    onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenDropdown(openDropdown === appt._id ? null : appt._id);
+                    }}
+                    className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"
+                    title="Change Status"
+                >
+                    <ChevronDown size={13} />
+                </button>
+
+                {openDropdown === appt._id && (
+                    <>
+                    {/* Backdrop — click করলে close হবে */}
+                    <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setOpenDropdown(null)}
+                    />
+                    {/* Dropdown */}
+                    <div className="absolute right-0 top-full mt-1 bg-white rounded-xl border border-slate-200 shadow-xl z-30 overflow-hidden min-w-[140px]">
+                        {STATUSES.filter((s) => s !== appt.status).map((s) => {
                         const conf = STATUS_CONFIG[s];
                         return (
-                          <button
+                            <button
                             key={s}
-                            onClick={() => handleStatusChange(appt._id, s)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors ${conf.text}`}
-                          >
+                            onClick={() => {
+                                handleStatusChange(appt._id, s);
+                                setOpenDropdown(null);
+                            }}
+                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors ${conf.text}`}
+                            >
                             <span className={`w-1.5 h-1.5 rounded-full ${conf.dot}`} />
                             {conf.label}
-                          </button>
+                            </button>
                         );
-                      })}
+                        })}
                     </div>
-                  </div>
+                    </>
+                )}
+                </div>
 
                   <button
                     onClick={() => handleDelete(appt._id, appt.name)}
