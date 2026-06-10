@@ -33,6 +33,7 @@ async function run() {
     const bannersCollection = client.db("Laser_Dental").collection("banners");
     const galleryCollection = client.db("Laser_Dental").collection("gallery");
     const appointmentsCollection = client.db("Laser_Dental").collection("appointments");
+    const servicesCollection = client.db("Laser_Dental").collection("services");
 
     // ── Test route ─────────────────────────────────────────────────────
     app.get("/secure", verifyToken, (req, res) => {
@@ -398,6 +399,175 @@ async function run() {
       } catch (error) {
         console.error("DELETE /appointments/:id:", error);
         res.status(500).send({ success: false, message: "Failed to delete appointment" });
+      }
+    });
+
+
+        // ══════════════════════════════════════════════════════════════════
+    // SERVICES ROUTES
+    // ══════════════════════════════════════════════════════════════════
+    
+    // Initial seed data — run once to populate DB
+    // POST /services/seed  (admin only — run once then delete/comment out)
+    app.post("/services/seed", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const existing = await servicesCollection.countDocuments();
+        if (existing > 0) {
+          return res.send({ success: false, message: "Already seeded" });
+        }
+    
+        const services = [
+          {
+            iconKey: "zap",
+            category: "Cosmetic",
+            title: "Laser Teeth Whitening",
+            shortDesc: "Brighten your smile up to 8 shades in a single session.",
+            description: "Our advanced laser whitening system uses medical-grade technology to safely remove deep stains caused by coffee, tea, and aging. The procedure is painless, fast, and delivers immediate, dramatic results.",
+            duration: "60 min",
+            price: "৳ 4,500",
+            tag: "Most Popular",
+            colorScheme: "sky",
+            isActive: true,
+            order: 1,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            iconKey: "anchor",
+            category: "Restorative",
+            title: "Dental Implants",
+            shortDesc: "Permanent tooth replacement that looks and feels natural.",
+            description: "Titanium implants fused with your jawbone give you a lifetime solution for missing teeth. We use digital imaging for precise placement and craft each crown to match your natural teeth perfectly.",
+            duration: "2–3 sessions",
+            price: "৳ 35,000",
+            tag: "Premium",
+            colorScheme: "emerald",
+            isActive: true,
+            order: 2,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            iconKey: "alignCenter",
+            category: "Orthodontics",
+            title: "Braces & Aligners",
+            shortDesc: "Straighten your teeth with modern, comfortable solutions.",
+            description: "From traditional metal braces to virtually invisible clear aligners, we offer personalized orthodontic treatment plans for teens and adults. Our orthodontists use 3D digital scans for precise treatment planning.",
+            duration: "12–24 months",
+            price: "From ৳ 18,000",
+            tag: "Customized",
+            colorScheme: "violet",
+            isActive: true,
+            order: 3,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            iconKey: "sparkles",
+            category: "Preventive",
+            title: "Scaling & Polishing",
+            shortDesc: "Professional cleaning for healthier gums and fresher breath.",
+            description: "Our ultrasonic scaling removes tartar buildup above and below the gumline, followed by a professional polishing that removes surface stains. Recommended every 6 months to prevent gum disease.",
+            duration: "45 min",
+            price: "৳ 1,800",
+            tag: "Routine Care",
+            colorScheme: "orange",
+            isActive: true,
+            order: 4,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            iconKey: "heartPulse",
+            category: "Restorative",
+            title: "Root Canal Treatment",
+            shortDesc: "Save your natural tooth from infection, painlessly.",
+            description: "Modern root canal therapy is virtually painless. We remove infected pulp, sterilize the canal with laser technology, and seal it with a biocompatible material — often completed in a single visit.",
+            duration: "60–90 min",
+            price: "৳ 8,000",
+            tag: "Laser Assisted",
+            colorScheme: "red",
+            isActive: true,
+            order: 5,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            iconKey: "smile",
+            category: "Cosmetic",
+            title: "Smile Makeover",
+            shortDesc: "A complete transformation tailored to your face and goals.",
+            description: "Combining veneers, whitening, contouring, and bonding, our smile makeover is a fully personalized cosmetic plan. We use digital smile design to show you your results before a single procedure begins.",
+            duration: "3–5 sessions",
+            price: "From ৳ 55,000",
+            tag: "Signature",
+            colorScheme: "amber",
+            isActive: true,
+            order: 6,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ];
+    
+        await servicesCollection.insertMany(services);
+        res.send({ success: true, message: "Services seeded successfully", count: services.length });
+      } catch (error) {
+        console.error("POST /services/seed:", error);
+        res.status(500).send({ success: false, message: "Seed failed" });
+      }
+    });
+    
+    // GET all — public (Home page এর জন্য, শুধু active)
+    app.get("/services", async (req, res) => {
+      try {
+        const result = await servicesCollection
+          .find({ isActive: true })
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, services: result });
+      } catch (error) {
+        console.error("GET /services:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch services" });
+      }
+    });
+    
+    // GET all for admin — includes inactive
+    app.get("/admin/services", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const result = await servicesCollection
+          .find()
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, services: result });
+      } catch (error) {
+        console.error("GET /admin/services:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch services" });
+      }
+    });
+    
+    // PATCH — update editable fields (admin only)
+    app.patch("/services/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const update = req.body;
+        delete update._id;
+        delete update.iconKey;      // icon change করা যাবে না
+        delete update.colorScheme;  // color change করা যাবে না
+        update.updatedAt = new Date();
+    
+        const result = await servicesCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: update }
+        );
+    
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ success: false, message: "Service not found" });
+        }
+    
+        res.send({ success: true, message: "Service updated", modifiedCount: result.modifiedCount });
+      } catch (error) {
+        console.error("PATCH /services/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to update service" });
       }
     });
 
