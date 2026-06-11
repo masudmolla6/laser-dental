@@ -34,6 +34,7 @@ async function run() {
     const galleryCollection = client.db("Laser_Dental").collection("gallery");
     const appointmentsCollection = client.db("Laser_Dental").collection("appointments");
     const servicesCollection = client.db("Laser_Dental").collection("services");
+    const reviewsCollection = client.db("Laser_Dental").collection("reviews");
 
     // ── Test route ─────────────────────────────────────────────────────
     app.get("/secure", verifyToken, (req, res) => {
@@ -409,113 +410,113 @@ async function run() {
     
     // Initial seed data — run once to populate DB
     // POST /services/seed  (admin only — run once then delete/comment out)
-    app.post("/services/seed", verifyToken, verifyAdmin(userCollection), async (req, res) => {
-      try {
-        const existing = await servicesCollection.countDocuments();
-        if (existing > 0) {
-          return res.send({ success: false, message: "Already seeded" });
-        }
+    // app.post("/services/seed", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+    //   try {
+    //     const existing = await servicesCollection.countDocuments();
+    //     if (existing > 0) {
+    //       return res.send({ success: false, message: "Already seeded" });
+    //     }
     
-        const services = [
-          {
-            iconKey: "zap",
-            category: "Cosmetic",
-            title: "Laser Teeth Whitening",
-            shortDesc: "Brighten your smile up to 8 shades in a single session.",
-            description: "Our advanced laser whitening system uses medical-grade technology to safely remove deep stains caused by coffee, tea, and aging. The procedure is painless, fast, and delivers immediate, dramatic results.",
-            duration: "60 min",
-            price: "৳ 4,500",
-            tag: "Most Popular",
-            colorScheme: "sky",
-            isActive: true,
-            order: 1,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            iconKey: "anchor",
-            category: "Restorative",
-            title: "Dental Implants",
-            shortDesc: "Permanent tooth replacement that looks and feels natural.",
-            description: "Titanium implants fused with your jawbone give you a lifetime solution for missing teeth. We use digital imaging for precise placement and craft each crown to match your natural teeth perfectly.",
-            duration: "2–3 sessions",
-            price: "৳ 35,000",
-            tag: "Premium",
-            colorScheme: "emerald",
-            isActive: true,
-            order: 2,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            iconKey: "alignCenter",
-            category: "Orthodontics",
-            title: "Braces & Aligners",
-            shortDesc: "Straighten your teeth with modern, comfortable solutions.",
-            description: "From traditional metal braces to virtually invisible clear aligners, we offer personalized orthodontic treatment plans for teens and adults. Our orthodontists use 3D digital scans for precise treatment planning.",
-            duration: "12–24 months",
-            price: "From ৳ 18,000",
-            tag: "Customized",
-            colorScheme: "violet",
-            isActive: true,
-            order: 3,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            iconKey: "sparkles",
-            category: "Preventive",
-            title: "Scaling & Polishing",
-            shortDesc: "Professional cleaning for healthier gums and fresher breath.",
-            description: "Our ultrasonic scaling removes tartar buildup above and below the gumline, followed by a professional polishing that removes surface stains. Recommended every 6 months to prevent gum disease.",
-            duration: "45 min",
-            price: "৳ 1,800",
-            tag: "Routine Care",
-            colorScheme: "orange",
-            isActive: true,
-            order: 4,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            iconKey: "heartPulse",
-            category: "Restorative",
-            title: "Root Canal Treatment",
-            shortDesc: "Save your natural tooth from infection, painlessly.",
-            description: "Modern root canal therapy is virtually painless. We remove infected pulp, sterilize the canal with laser technology, and seal it with a biocompatible material — often completed in a single visit.",
-            duration: "60–90 min",
-            price: "৳ 8,000",
-            tag: "Laser Assisted",
-            colorScheme: "red",
-            isActive: true,
-            order: 5,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            iconKey: "smile",
-            category: "Cosmetic",
-            title: "Smile Makeover",
-            shortDesc: "A complete transformation tailored to your face and goals.",
-            description: "Combining veneers, whitening, contouring, and bonding, our smile makeover is a fully personalized cosmetic plan. We use digital smile design to show you your results before a single procedure begins.",
-            duration: "3–5 sessions",
-            price: "From ৳ 55,000",
-            tag: "Signature",
-            colorScheme: "amber",
-            isActive: true,
-            order: 6,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ];
+    //     const services = [
+    //       {
+    //         iconKey: "zap",
+    //         category: "Cosmetic",
+    //         title: "Laser Teeth Whitening",
+    //         shortDesc: "Brighten your smile up to 8 shades in a single session.",
+    //         description: "Our advanced laser whitening system uses medical-grade technology to safely remove deep stains caused by coffee, tea, and aging. The procedure is painless, fast, and delivers immediate, dramatic results.",
+    //         duration: "60 min",
+    //         price: "৳ 4,500",
+    //         tag: "Most Popular",
+    //         colorScheme: "sky",
+    //         isActive: true,
+    //         order: 1,
+    //         createdAt: new Date(),
+    //         updatedAt: new Date(),
+    //       },
+    //       {
+    //         iconKey: "anchor",
+    //         category: "Restorative",
+    //         title: "Dental Implants",
+    //         shortDesc: "Permanent tooth replacement that looks and feels natural.",
+    //         description: "Titanium implants fused with your jawbone give you a lifetime solution for missing teeth. We use digital imaging for precise placement and craft each crown to match your natural teeth perfectly.",
+    //         duration: "2–3 sessions",
+    //         price: "৳ 35,000",
+    //         tag: "Premium",
+    //         colorScheme: "emerald",
+    //         isActive: true,
+    //         order: 2,
+    //         createdAt: new Date(),
+    //         updatedAt: new Date(),
+    //       },
+    //       {
+    //         iconKey: "alignCenter",
+    //         category: "Orthodontics",
+    //         title: "Braces & Aligners",
+    //         shortDesc: "Straighten your teeth with modern, comfortable solutions.",
+    //         description: "From traditional metal braces to virtually invisible clear aligners, we offer personalized orthodontic treatment plans for teens and adults. Our orthodontists use 3D digital scans for precise treatment planning.",
+    //         duration: "12–24 months",
+    //         price: "From ৳ 18,000",
+    //         tag: "Customized",
+    //         colorScheme: "violet",
+    //         isActive: true,
+    //         order: 3,
+    //         createdAt: new Date(),
+    //         updatedAt: new Date(),
+    //       },
+    //       {
+    //         iconKey: "sparkles",
+    //         category: "Preventive",
+    //         title: "Scaling & Polishing",
+    //         shortDesc: "Professional cleaning for healthier gums and fresher breath.",
+    //         description: "Our ultrasonic scaling removes tartar buildup above and below the gumline, followed by a professional polishing that removes surface stains. Recommended every 6 months to prevent gum disease.",
+    //         duration: "45 min",
+    //         price: "৳ 1,800",
+    //         tag: "Routine Care",
+    //         colorScheme: "orange",
+    //         isActive: true,
+    //         order: 4,
+    //         createdAt: new Date(),
+    //         updatedAt: new Date(),
+    //       },
+    //       {
+    //         iconKey: "heartPulse",
+    //         category: "Restorative",
+    //         title: "Root Canal Treatment",
+    //         shortDesc: "Save your natural tooth from infection, painlessly.",
+    //         description: "Modern root canal therapy is virtually painless. We remove infected pulp, sterilize the canal with laser technology, and seal it with a biocompatible material — often completed in a single visit.",
+    //         duration: "60–90 min",
+    //         price: "৳ 8,000",
+    //         tag: "Laser Assisted",
+    //         colorScheme: "red",
+    //         isActive: true,
+    //         order: 5,
+    //         createdAt: new Date(),
+    //         updatedAt: new Date(),
+    //       },
+    //       {
+    //         iconKey: "smile",
+    //         category: "Cosmetic",
+    //         title: "Smile Makeover",
+    //         shortDesc: "A complete transformation tailored to your face and goals.",
+    //         description: "Combining veneers, whitening, contouring, and bonding, our smile makeover is a fully personalized cosmetic plan. We use digital smile design to show you your results before a single procedure begins.",
+    //         duration: "3–5 sessions",
+    //         price: "From ৳ 55,000",
+    //         tag: "Signature",
+    //         colorScheme: "amber",
+    //         isActive: true,
+    //         order: 6,
+    //         createdAt: new Date(),
+    //         updatedAt: new Date(),
+    //       },
+    //     ];
     
-        await servicesCollection.insertMany(services);
-        res.send({ success: true, message: "Services seeded successfully", count: services.length });
-      } catch (error) {
-        console.error("POST /services/seed:", error);
-        res.status(500).send({ success: false, message: "Seed failed" });
-      }
-    });
+    //     await servicesCollection.insertMany(services);
+    //     res.send({ success: true, message: "Services seeded successfully", count: services.length });
+    //   } catch (error) {
+    //     console.error("POST /services/seed:", error);
+    //     res.status(500).send({ success: false, message: "Seed failed" });
+    //   }
+    // });
     
     // GET all — public (Home page এর জন্য, শুধু active)
     app.get("/services", async (req, res) => {
@@ -568,6 +569,143 @@ async function run() {
       } catch (error) {
         console.error("PATCH /services/:id:", error);
         res.status(500).send({ success: false, message: "Failed to update service" });
+      }
+    });
+
+
+
+
+        // ══════════════════════════════════════════════════════════════════
+    // REVIEW ROUTES
+    // ══════════════════════════════════════════════════════════════════
+
+    // Collection: reviewsCollection
+    // const reviewsCollection = client.db("Laser_Dental").collection("reviews");
+
+    // POST — public (anyone can submit)
+    app.post("/reviews", async (req, res) => {
+      try {
+        const data = req.body;
+
+        if (!data.name || !data.treatment || !data.rating || !data.review) {
+          return res.status(400).send({
+            success: false,
+            message: "Name, treatment, rating and review are required",
+          });
+        }
+
+        // Auto-generate initials from name
+        const initials = data.name
+          .trim()
+          .split(" ")
+          .map((w) => w[0]?.toUpperCase())
+          .slice(0, 2)
+          .join("");
+
+        // Avatar color pairs
+        const AVATAR_COLORS = [
+          { bg: "#e0f2fe", color: "#0369a1" },
+          { bg: "#dcfce7", color: "#166534" },
+          { bg: "#fce7f3", color: "#9d174d" },
+          { bg: "#d1fae5", color: "#065f46" },
+          { bg: "#fef3c7", color: "#92400e" },
+          { bg: "#ede9fe", color: "#5b21b6" },
+        ];
+        const randomColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+
+        const review = {
+          name:       data.name.trim(),
+          initials,
+          treatment:  data.treatment,
+          rating:     Number(data.rating),
+          review:     data.review.trim(),
+          avatarBg:   randomColor.bg,
+          avatarColor:randomColor.color,
+          status:     "pending",   // pending | approved | rejected
+          date:       new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          createdAt:  new Date(),
+          updatedAt:  new Date(),
+        };
+
+        await reviewsCollection.insertOne(review);
+        res.send({ success: true, message: "Review submitted successfully" });
+      } catch (error) {
+        console.error("POST /reviews:", error);
+        res.status(500).send({ success: false, message: "Failed to submit review" });
+      }
+    });
+
+    // GET — public (only approved)
+    app.get("/reviews/public", async (req, res) => {
+      try {
+        const result = await reviewsCollection
+          .find({ status: "approved" })
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send({ success: true, reviews: result });
+        console.log(result);
+      } catch (error) {
+        console.error("GET /reviews/public:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch reviews" });
+      }
+    });
+
+    // GET all — admin (all statuses)
+    app.get("/reviews", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const { status } = req.query;
+        const filter = {};
+        if (status) filter.status = status;
+
+        const result = await reviewsCollection
+          .find(filter)
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send({ success: true, reviews: result, total: result.length });
+      } catch (error) {
+        console.error("GET /reviews:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch reviews" });
+      }
+    });
+
+    // PATCH — approve / reject / update (admin)
+    app.patch("/reviews/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const update = req.body;
+        delete update._id;
+        update.updatedAt = new Date();
+
+        const result = await reviewsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: update }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ success: false, message: "Review not found" });
+        }
+
+        res.send({ success: true, message: "Review updated", modifiedCount: result.modifiedCount });
+      } catch (error) {
+        console.error("PATCH /reviews/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to update review" });
+      }
+    });
+
+    // DELETE — admin
+    app.delete("/reviews/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const result = await reviewsCollection.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ success: false, message: "Review not found" });
+        }
+
+        res.send({ success: true, message: "Review deleted successfully" });
+      } catch (error) {
+        console.error("DELETE /reviews/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to delete review" });
       }
     });
 
