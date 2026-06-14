@@ -7,12 +7,10 @@ import useBanners from "../../../hooks/useBanners";
 const Banner = () => {
   const [banners, isLoading] = useBanners();
 
-  // isActive true গুলো order অনুযায়ী sort
   const activeBanners = banners
     .filter((b) => b.isActive)
     .sort((a, b) => a.order - b.order);
 
-  // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="w-full flex items-center justify-center bg-[#050f23]"
@@ -25,7 +23,6 @@ const Banner = () => {
     );
   }
 
-  // ── No active banners fallback ────────────────────────────────────────
   if (!activeBanners.length) {
     return (
       <div className="w-full flex items-center justify-center bg-[#050f23]"
@@ -154,6 +151,7 @@ const Banner = () => {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           animation: shimmerText 3.5s linear infinite;
+          display: block;
         }
 
         /* ── Mobile ── */
@@ -183,177 +181,243 @@ const Banner = () => {
           emulateTouch
           stopOnHover
         >
-          {activeBanners.map((slide, idx) => (
-            <div key={slide._id} className="banner-slide-root">
+          {activeBanners.map((slide, idx) => {
+            const isRight = slide.align === "right";
 
-              {/* Background image */}
-              <div
-                className="banner-bg"
-                style={{
-                  backgroundImage: `url(${slide.image})`,
-                  backgroundPosition: slide.objectPosition || "center center",
-                }}
-              />
+            return (
+              <div key={slide._id} className="banner-slide-root">
 
-              {/* Dark overlay — direction based on align */}
-              <div
-                className="absolute inset-0 z-10"
-                style={{
-                  background: slide.align === "right"
-                    ? "linear-gradient(to left,  rgba(5,15,35,0.92) 0%, rgba(5,15,35,0.65) 45%, rgba(5,15,35,0.2) 100%)"
-                    : "linear-gradient(to right, rgba(5,15,35,0.92) 0%, rgba(5,15,35,0.65) 45%, rgba(5,15,35,0.2) 100%)",
-                }}
-              />
-
-              {/* Bottom fade */}
-              <div
-                className="absolute bottom-0 inset-x-0 h-32 pointer-events-none z-10"
-                style={{ background: "linear-gradient(to top, rgba(5,15,35,0.6), transparent)" }}
-              />
-
-              {/* Dot pattern */}
-              <div
-                className="absolute inset-0 pointer-events-none opacity-[0.04] z-10"
-                style={{
-                  backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
-                  backgroundSize: "40px 40px",
-                }}
-              />
-
-              {/* ── Content ── */}
-              <div className="absolute inset-0 flex items-center z-20">
+                {/* Background */}
                 <div
-                  className="w-full max-w-7xl mx-auto px-6 md:px-16 flex"
-                  style={{ justifyContent: slide.align === "right" ? "flex-end" : "flex-start" }}
-                >
-                  <div className="text-white flex flex-col gap-5" style={{ maxWidth: "560px" }}>
+                  className="banner-bg"
+                  style={{
+                    backgroundImage: `url(${slide.image})`,
+                    backgroundPosition: slide.objectPosition || "center center",
+                  }}
+                />
 
-                    {/* Tag */}
-                    {slide.tag && (
-                      <div className="slide-tag">
-                        <span
-                          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full"
-                          style={{
-                            background: "rgba(14,165,233,0.2)",
-                            border: "1px solid rgba(14,165,233,0.4)",
-                            color: "#38bdf8",
-                          }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-                          {slide.tag}
-                        </span>
-                      </div>
-                    )}
+                {/* Overlay — direction based on align */}
+                <div
+                  className="absolute inset-0 z-10"
+                  style={{
+                    background: isRight
+                      ? "linear-gradient(to left,  rgba(5,15,35,0.92) 0%, rgba(5,15,35,0.65) 45%, rgba(5,15,35,0.15) 100%)"
+                      : "linear-gradient(to right, rgba(5,15,35,0.92) 0%, rgba(5,15,35,0.65) 45%, rgba(5,15,35,0.15) 100%)",
+                  }}
+                />
 
-                    {/* Heading */}
-                    <div className="slide-heading">
-                      <h1
-                        className="font-display"
-                        style={{
-                          fontSize: "clamp(2.2rem, 5vw, 4rem)",
-                          fontWeight: 800,
-                          lineHeight: 1.1,
-                          letterSpacing: "-0.02em",
-                          margin: 0,
-                        }}
-                      >
-                        {slide.title}
-                        <br />
-                        <span className="shimmer-accent">{slide.accentTitle}</span>
-                      </h1>
-                    </div>
+                {/* Bottom fade */}
+                <div
+                  className="absolute bottom-0 inset-x-0 h-32 pointer-events-none z-10"
+                  style={{ background: "linear-gradient(to top, rgba(5,15,35,0.6), transparent)" }}
+                />
 
-                    {/* Subtitle */}
-                    <p
-                      className="slide-sub"
+                {/* Dot pattern */}
+                <div
+                  className="absolute inset-0 pointer-events-none opacity-[0.04] z-10"
+                  style={{
+                    backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
+                    backgroundSize: "40px 40px",
+                  }}
+                />
+
+                {/* ── Content ── */}
+                <div className="absolute inset-0 flex items-center z-20">
+                  <div
+                    className="w-full max-w-7xl mx-auto px-6 md:px-16 flex"
+                    style={{ justifyContent: isRight ? "flex-end" : "flex-start" }}
+                  >
+                    {/* ✅ text-align always left, max-width fixed */}
+                    <div
+                      className="text-white flex flex-col gap-5"
                       style={{
-                        fontSize: "clamp(0.875rem, 1.5vw, 1rem)",
-                        color: "rgba(255,255,255,0.7)",
-                        lineHeight: 1.75,
-                        margin: 0,
-                        maxWidth: "460px",
+                        maxWidth: "540px",
+                        width: "100%",
+                        textAlign: "left",  /* ✅ always left — never center */
+                        alignItems: "flex-start",
                       }}
                     >
-                      {slide.subtitle}
-                    </p>
 
-                    {/* Buttons */}
-                    <div className="slide-btn flex flex-wrap gap-3 items-center">
-                      {slide.buttonLink && slide.buttonText && (
-                        <Link
-                          to={slide.buttonLink}
-                          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-sm transition-all duration-200 active:scale-95 group hover:brightness-110"
-                          style={
-                            slide.btnStyle === "outline"
-                              ? {
-                                  background: "rgba(255,255,255,0.1)",
-                                  backdropFilter: "blur(8px)",
-                                  border: "1.5px solid rgba(255,255,255,0.35)",
-                                  color: "#fff",
-                                  textDecoration: "none",
-                                }
-                              : {
-                                  background: "linear-gradient(135deg, #0284c7, #0ea5e9)",
-                                  color: "#fff",
-                                  boxShadow: "0 6px 24px rgba(14,165,233,0.5)",
-                                  textDecoration: "none",
-                                }
-                          }
-                        >
-                          {slide.buttonText}
-                          <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
-                        </Link>
-                      )}
-
-                      {/* WhatsApp button — always shown */}
-                      <a
-                        href="https://wa.me/8801745565435"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full font-semibold text-sm transition-all duration-200 active:scale-95 hover:brightness-110"
-                        style={{
-                          background: "rgba(18,140,126,0.2)",
-                          border: "1.5px solid rgba(18,140,126,0.5)",
-                          color: "#4ade80",
-                          textDecoration: "none",
-                        }}
-                      >
-                        <MessageCircle size={15} />
-                        WhatsApp
-                      </a>
-                    </div>
-
-                    {/* Stats badges */}
-                    <div
-                      className="slide-badge flex flex-wrap items-center gap-5 pt-4"
-                      style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}
-                    >
-                      {[
-                        { num: "1,200+", label: "Happy Patients"    },
-                        { num: "15+",    label: "Years Experience"  },
-                        { num: "4.9★",   label: "Patient Rating"   },
-                      ].map(({ num, label }) => (
-                        <div key={label} className="flex flex-col">
-                          <span className="font-display text-base font-bold text-white">{num}</span>
-                          <span className="text-[10px] uppercase tracking-[0.1em]" style={{ color: "rgba(255,255,255,0.45)" }}>
-                            {label}
+                      {/* Tag */}
+                      {slide.tag && (
+                        <div className="slide-tag">
+                          <span
+                            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full"
+                            style={{
+                              background: "rgba(14,165,233,0.2)",
+                              border: "1px solid rgba(14,165,233,0.4)",
+                              color: "#38bdf8",
+                            }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                            {slide.tag}
                           </span>
                         </div>
-                      ))}
+                      )}
+
+                      {/* ✅ Heading — title & accentTitle font-size separated */}
+                      <div className="slide-heading" style={{ margin: 0 }}>
+                        {/* Main title — large */}
+                        {slide.title && (
+                          <h1
+                            style={{
+                              fontSize: "clamp(2rem, 4.5vw, 3.6rem)",
+                              fontWeight: 800,
+                              lineHeight: 1.12,
+                              letterSpacing: "-0.02em",
+                              margin: 0,
+                              color: "#fff",
+                            }}
+                          >
+                            {slide.title}
+                          </h1>
+                        )}
+
+                        {/* Accent title — slightly smaller so it never overflows */}
+                        {slide.accentTitle && (
+                          <span
+                            className="shimmer-accent"
+                            style={{
+                              fontSize: "clamp(1.7rem, 3.8vw, 3rem)", /* ✅ smaller than title */
+                              fontWeight: 800,
+                              lineHeight: 1.15,
+                              letterSpacing: "-0.02em",
+                              marginTop: "4px",
+                            }}
+                          >
+                            {slide.accentTitle}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Subtitle */}
+                      {slide.subtitle && (
+                        <p
+                          className="slide-sub"
+                          style={{
+                            fontSize: "clamp(0.875rem, 1.4vw, 1rem)",
+                            color: "rgba(255,255,255,0.7)",
+                            lineHeight: 1.75,
+                            margin: 0,
+                            maxWidth: "460px",
+                            textAlign: "left", /* ✅ force left */
+                          }}
+                        >
+                          {slide.subtitle}
+                        </p>
+                      )}
+
+                      {/* Buttons */}
+                      <div
+                        className="slide-btn"
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "12px",
+                          alignItems: "center",
+                          justifyContent: "flex-start", /* ✅ always left */
+                        }}
+                      >
+                        {slide.buttonLink && slide.buttonText && (
+                          <Link
+                            to={slide.buttonLink}
+                            className="inline-flex items-center gap-2 font-bold text-sm transition-all duration-200 active:scale-95 group hover:brightness-110"
+                            style={
+                              slide.btnStyle === "outline"
+                                ? {
+                                    padding: "12px 28px",
+                                    borderRadius: "999px",
+                                    background: "rgba(255,255,255,0.1)",
+                                    backdropFilter: "blur(8px)",
+                                    border: "1.5px solid rgba(255,255,255,0.35)",
+                                    color: "#fff",
+                                    textDecoration: "none",
+                                  }
+                                : {
+                                    padding: "12px 28px",
+                                    borderRadius: "999px",
+                                    background: "linear-gradient(135deg, #0284c7, #0ea5e9)",
+                                    color: "#fff",
+                                    boxShadow: "0 6px 24px rgba(14,165,233,0.5)",
+                                    textDecoration: "none",
+                                  }
+                            }
+                          >
+                            {slide.buttonText}
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
+                          </Link>
+                        )}
+
+                        <a
+                          href="https://wa.me/8801745565435"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 font-semibold text-sm transition-all duration-200 active:scale-95 hover:brightness-110"
+                          style={{
+                            padding: "12px 22px",
+                            borderRadius: "999px",
+                            background: "rgba(18,140,126,0.2)",
+                            border: "1.5px solid rgba(18,140,126,0.5)",
+                            color: "#4ade80",
+                            textDecoration: "none",
+                          }}
+                        >
+                          <MessageCircle size={15} />
+                          WhatsApp
+                        </a>
+                      </div>
+
+                      {/* Stats */}
+                      <div
+                        className="slide-badge"
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                          gap: "0",
+                          paddingTop: "20px",
+                          borderTop: "1px solid rgba(255,255,255,0.12)",
+                          justifyContent: "flex-start", /* ✅ always left */
+                        }}
+                      >
+                        {[
+                          { num: "1,200+", label: "Happy Patients"   },
+                          { num: "15+",    label: "Years Experience" },
+                          { num: "4.9★",   label: "Patient Rating"  },
+                        ].map(({ num, label }, i) => (
+                          <div
+                            key={label}
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              paddingRight: i < 2 ? "28px" : 0,
+                              marginRight: i < 2 ? "28px" : 0,
+                              borderRight: i < 2 ? "1px solid rgba(255,255,255,0.12)" : "none",
+                            }}
+                          >
+                            <span style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>{num}</span>
+                            <span style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>
+                              {label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Slide counter */}
-              <div
-                className="absolute bottom-8 right-6 md:right-16 text-white/30 font-bold z-20 font-display"
-                style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}
-              >
-                0{idx + 1} / 0{activeBanners.length}
+                {/* Slide counter */}
+                <div
+                  className="absolute bottom-8 right-6 md:right-16 text-white/30 font-bold z-20"
+                  style={{ fontSize: "0.75rem", letterSpacing: "0.1em" }}
+                >
+                  0{idx + 1} / 0{activeBanners.length}
+                </div>
+
               </div>
-            </div>
-          ))}
+            );
+          })}
         </Carousel>
       </div>
     </div>
