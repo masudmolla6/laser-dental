@@ -3,6 +3,7 @@ import { Carousel } from "react-responsive-carousel";
 import { Link } from "react-router-dom";
 import { ArrowRight, MessageCircle, Loader2 } from "lucide-react";
 import useBanners from "../../../hooks/useBanners";
+import BannerSkeleton from "./BannerSkeleton";
 
 const Banner = () => {
   const [banners, isLoading] = useBanners();
@@ -12,15 +13,7 @@ const Banner = () => {
     .sort((a, b) => a.order - b.order);
 
   if (isLoading) {
-    return (
-      <div className="w-full flex items-center justify-center bg-[#050f23]"
-        style={{ height: "90vh", minHeight: 540 }}>
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 size={32} className="animate-spin text-sky-400" />
-          <p className="text-white/40 text-sm tracking-wide">Loading...</p>
-        </div>
-      </div>
-    );
+    return <BannerSkeleton></BannerSkeleton>
   }
 
   if (!activeBanners.length) {
