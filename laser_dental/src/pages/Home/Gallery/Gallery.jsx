@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useGallery from "../../../hooks/useGallery";
 import { Search, Filter, X, Eye, ChevronRight, Loader2, ImagePlus } from "lucide-react";
+import GallerySkeleton from "./GallerySkeleton";
 
 // ── Category filter list ──────────────────────────────────────────────────
 const CATEGORIES = ["All", "Whitening", "Implant", "Braces", "Root Canal", "Scaling", "Cosmetic", "Other"];
@@ -186,10 +187,17 @@ const GalleryCard = ({ item, onView }) => (
 const Gallery = () => {
   const [gallery, isLoading] = useGallery();
 
+
   const [activeCategory, setActiveCategory] = useState("All");
   const [search,         setSearch]         = useState("");
   const [selectedItem,   setSelectedItem]   = useState(null);
   const [visibleCount,   setVisibleCount]   = useState(9);
+
+    // loading State
+  if (isLoading) {
+    return <GallerySkeleton />;
+  }
+
 
   // ── Filter ──────────────────────────────────────────────────────────
   const filtered = gallery.filter((item) => {

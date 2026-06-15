@@ -7,6 +7,7 @@ import { Star, Send, Loader2, CheckCircle2, ChevronDown } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import useAxiosPublic from "../../../hooks/useAxiosPublic";
 import useReviews from "../../../hooks/useReviews";
+import TestimonialsSkeleton from "./TestimonialsSkeleton";
 
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -231,7 +232,13 @@ const Testimonials = () => {
   // ✅ useReviews hook — /reviews/public → only approved
   const [reviews, isLoading, refetch, error] = useReviews();
 
-    console.log(reviews);
+
+    // ✅ Loading state handle
+  if (isLoading) {
+    return <TestimonialsSkeleton />;
+  }
+
+    // console.log(reviews);
 
   // // backend এ approved review থাকলে সেগুলো, না থাকলে demo
   // const reviews = backendReviews.length > 0 ? backendReviews : DEMO_REVIEWS;
