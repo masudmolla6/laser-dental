@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import useServices from "../../../hooks/useServices";
+import ServicesSkeleton from "./ServicesSkeleton";
 
 // ── Icon map ──────────────────────────────────────────────────────────────
 const ICON_MAP = {
@@ -223,12 +224,7 @@ const Services = () => {
         </div>
 
         {/* Loading */}
-        {isLoading && (
-          <div className="py-32 flex flex-col items-center gap-4">
-            <Loader2 size={32} className="animate-spin text-sky-600" />
-            <p className="text-gray-400 text-sm">Loading services...</p>
-          </div>
-        )}
+        {isLoading && <ServicesSkeleton count={6} />}
 
         {/* Empty */}
         {!isLoading && filtered.length === 0 && (

@@ -6,6 +6,7 @@ import {
   ChevronRight, Users, Calendar, TrendingUp, Building2,
   Stethoscope, Sparkles, Shield, BadgeCheck
 } from "lucide-react";
+import AboutDoctorSkeleton from "./AboutDoctorSkeleton";
 
 // ── Animated Counter ────────────────────────────────────────────────────────
 const Counter = ({ target, suffix = "", duration = 1800 }) => {
@@ -103,6 +104,7 @@ const AboutDoctor = () => {
     const t = setTimeout(() => setVisible(true), 60);
     return () => clearTimeout(t);
   }, []);
+
 
   const fadeUp = (delay = 0) => ({
     opacity: visible ? 1 : 0,
