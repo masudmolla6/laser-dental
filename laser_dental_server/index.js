@@ -531,6 +531,39 @@ async function run() {
         res.status(500).send({ success: false, message: "Failed to fetch services" });
       }
     });
+
+    // GET single service by ID — public (Service Details পেজের জন্য)
+    app.get("/services/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        
+        // Check if valid ObjectId
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ 
+            success: false, 
+            message: "Invalid service ID format" 
+          });
+        }
+
+        const query = { _id: new ObjectId(id) };
+        const result = await servicesCollection.findOne(query);
+
+        if (!result) {
+          return res.status(404).send({ 
+            success: false, 
+            message: "Service not found" 
+          });
+        }
+
+        res.send({ success: true, service: result });
+      } catch (error) {
+        console.error("GET /services/:id:", error);
+        res.status(500).send({ 
+          success: false, 
+          message: "Failed to fetch service details" 
+        });
+      }
+    });
     
     // GET all for admin — includes inactive
     app.get("/admin/services", verifyToken, verifyAdmin(userCollection), async (req, res) => {
@@ -643,7 +676,6 @@ async function run() {
           .sort({ createdAt: -1 })
           .toArray();
         res.send({ success: true, reviews: result });
-        console.log(result);
       } catch (error) {
         console.error("GET /reviews/public:", error);
         res.status(500).send({ success: false, message: "Failed to fetch reviews" });
