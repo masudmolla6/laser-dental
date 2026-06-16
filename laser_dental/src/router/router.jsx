@@ -21,6 +21,7 @@ import ManageServices from "../pages/Dashboard/ManageServices/ManageServices";
 import Gallery from "../pages/Home/Gallery/Gallery";
 import AllServices from "../pages/Services/AllServices/AllServices";
 import ServiceDetails from "../pages/Services/ServiceDetails/ServiceDetails";
+import AppointmentPage from "../pages/Appointments/AppointmentPage";
 
 const router=createBrowserRouter([
     {
@@ -50,6 +51,10 @@ const router=createBrowserRouter([
             {
                 path:"/gallery",
                 element:<Gallery></Gallery>
+            },
+            {
+                path:"/appointment",
+                element:<AppointmentPage></AppointmentPage>
             }
         ]
     },
