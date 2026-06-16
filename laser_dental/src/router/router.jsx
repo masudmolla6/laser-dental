@@ -19,6 +19,8 @@ import ManageAppointments from "../pages/Dashboard/ManageAppointments/ManageAppo
 import ManageReviews from "../pages/Dashboard/ManageReviews/ManageReviews";
 import ManageServices from "../pages/Dashboard/ManageServices/ManageServices";
 import Gallery from "../pages/Home/Gallery/Gallery";
+import AllServices from "../pages/Services/AllServices/AllServices";
+import ServiceDetails from "../pages/Services/ServiceDetails/ServiceDetails";
 
 const router=createBrowserRouter([
     {
@@ -36,6 +38,14 @@ const router=createBrowserRouter([
             {
                 path:"/about",
                 element:<About></About>
+            },
+            {
+                path:"/services",
+                element:<AllServices></AllServices>
+            },
+            {
+                path:"/services/:id",
+                element:<ServiceDetails></ServiceDetails>
             },
             {
                 path:"/gallery",
