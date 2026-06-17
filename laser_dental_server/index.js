@@ -35,6 +35,7 @@ async function run() {
     const appointmentsCollection = client.db("Laser_Dental").collection("appointments");
     const servicesCollection = client.db("Laser_Dental").collection("services");
     const reviewsCollection = client.db("Laser_Dental").collection("reviews");
+    const branchesCollection = client.db("Laser_Dental").collection("branches");
 
     // ── Test route ─────────────────────────────────────────────────────
     app.get("/secure", verifyToken, (req, res) => {
@@ -738,6 +739,232 @@ async function run() {
       } catch (error) {
         console.error("DELETE /reviews/:id:", error);
         res.status(500).send({ success: false, message: "Failed to delete review" });
+      }
+    });
+
+
+    // ══════════════════════════════════════════════════════════════════════
+    // BRANCH ROUTES — add this block inside run() in your index.js,
+    // near the other route sections (e.g. after SERVICES ROUTES).
+    // Also add this line near your other collections:
+    //
+    //   const branchesCollection = client.db("Laser_Dental").collection("branches");
+    //
+    // ══════════════════════════════════════════════════════════════════════
+
+    // GET all — public (Appointment form এর জন্য, শুধু active branches)
+    app.get("/branches", async (req, res) => {
+      try {
+        const result = await branchesCollection
+          .find({ isActive: true })
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, branches: result });
+      } catch (error) {
+        console.error("GET /branches:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch branches" });
+      }
+    });
+
+    // GET all for admin — includes inactive branches
+    app.get("/admin/branches", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const result = await branchesCollection
+          .find()
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, branches: result, total: result.length });
+      } catch (error) {
+        console.error("GET /admin/branches:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch branches" });
+      }
+    });
+
+    // GET single by ID — admin only (for edit form pre-fill)
+    app.get("/branches/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid branch ID format" });
+        }
+
+        const result = await branchesCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!result) {
+          return res.status(404).send({ success: false, message: "Branch not found" });
+        }
+
+        res.send({ success: true, branch: result });
+      } catch (error) {
+        console.error("GET /branches/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch branch" });
+      }
+    });
+
+    // POST — add new branch — admin only
+    app.post("/branches", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const data = req.body;
+
+        // Validation
+        if (!data.name || !data.slug || !data.area || !data.phone) {
+          return res.status(400).send({
+            success: false,
+            message: "Name, slug, area and phone are required",
+          });
+        }
+
+        // Slug must be unique — appointment form uses it as the location value
+        const existing = await branchesCollection.findOne({ slug: data.slug });
+        if (existing) {
+          return res.status(409).send({
+            success: false,
+            message: "A branch with this slug already exists. Please choose a different one.",
+          });
+        }
+
+        // Determine next order value (new branch goes to the end)
+        const lastBranch = await branchesCollection
+          .find()
+          .sort({ order: -1 })
+          .limit(1)
+          .toArray();
+        const nextOrder = lastBranch.length > 0 ? (lastBranch[0].order || 0) + 1 : 1;
+
+        const branch = {
+          name:       data.name.trim(),
+          slug:       data.slug.trim().toLowerCase(),
+          area:       data.area.trim(),
+          city:       data.city?.trim() || "Dhaka",
+          address:    data.address?.trim() || "",
+          phone:      data.phone.trim(),
+          mapLink:    data.mapLink?.trim() || "",
+          hours:      Array.isArray(data.hours) ? data.hours : [],
+          closedDays: Array.isArray(data.closedDays) ? data.closedDays : ["Friday"],
+          isActive:   data.isActive !== undefined ? data.isActive : true,
+          order:      nextOrder,
+          createdAt:  new Date(),
+          updatedAt:  new Date(),
+        };
+
+        const result = await branchesCollection.insertOne(branch);
+
+        res.send({
+          success: true,
+          message: "Branch added successfully",
+          insertedId: result.insertedId,
+        });
+      } catch (error) {
+        console.error("POST /branches:", error);
+        res.status(500).send({ success: false, message: "Failed to add branch" });
+      }
+    });
+
+    // PATCH — update branch (info, hours, isActive toggle) — admin only
+    app.patch("/branches/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const update = req.body;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid branch ID format" });
+        }
+
+        delete update._id;
+
+        // If slug is being changed, make sure it's still unique
+        if (update.slug) {
+          update.slug = update.slug.trim().toLowerCase();
+          const existing = await branchesCollection.findOne({
+            slug: update.slug,
+            _id: { $ne: new ObjectId(id) },
+          });
+          if (existing) {
+            return res.status(409).send({
+              success: false,
+              message: "Another branch already uses this slug",
+            });
+          }
+        }
+
+        update.updatedAt = new Date();
+
+        const result = await branchesCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: update }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ success: false, message: "Branch not found" });
+        }
+
+        res.send({
+          success: true,
+          message: "Branch updated successfully",
+          modifiedCount: result.modifiedCount,
+        });
+      } catch (error) {
+        console.error("PATCH /branches/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to update branch" });
+      }
+    });
+
+    // PATCH — reorder branches — admin only
+    // body: { orders: [{ id: "...", order: 1 }, { id: "...", order: 2 }] }
+    app.patch("/branches/reorder", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const { orders } = req.body;
+        if (!Array.isArray(orders)) {
+          return res.status(400).send({ success: false, message: "orders array is required" });
+        }
+
+        const bulkOps = orders.map(({ id, order }) => ({
+          updateOne: {
+            filter: { _id: new ObjectId(id) },
+            update: { $set: { order, updatedAt: new Date() } },
+          },
+        }));
+
+        await branchesCollection.bulkWrite(bulkOps);
+
+        res.send({ success: true, message: "Branch order updated" });
+      } catch (error) {
+        console.error("PATCH /branches/reorder:", error);
+        res.status(500).send({ success: false, message: "Failed to reorder branches" });
+      }
+    });
+
+    // DELETE — admin only
+    // Note: appointments already booked under this branch keep their old `location`
+    // value (the slug), so historical records remain intact even after deletion.
+    app.delete("/branches/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid branch ID format" });
+        }
+
+        // Prevent deleting the last remaining branch — site must always have one
+        const totalBranches = await branchesCollection.countDocuments();
+        if (totalBranches <= 1) {
+          return res.status(400).send({
+            success: false,
+            message: "Cannot delete the only remaining branch. Add another branch first.",
+          });
+        }
+
+        const result = await branchesCollection.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ success: false, message: "Branch not found" });
+        }
+
+        res.send({ success: true, message: "Branch deleted successfully" });
+      } catch (error) {
+        console.error("DELETE /branches/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to delete branch" });
       }
     });
 
