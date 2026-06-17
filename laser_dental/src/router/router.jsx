@@ -22,6 +22,7 @@ import Gallery from "../pages/Home/Gallery/Gallery";
 import AllServices from "../pages/Services/AllServices/AllServices";
 import ServiceDetails from "../pages/Services/ServiceDetails/ServiceDetails";
 import AppointmentPage from "../pages/Appointments/AppointmentPage";
+import ManageBranches from "../pages/Dashboard/ManageBranches/ManageBranches";
 
 const router=createBrowserRouter([
     {
@@ -106,6 +107,10 @@ const router=createBrowserRouter([
             {
                 path:"manageServices",
                 element:<ManageServices></ManageServices>
+            },
+            {
+                path: "manageBranches",
+                element:<ManageBranches></ManageBranches>
             },
             {
                 path: "adminProfile",

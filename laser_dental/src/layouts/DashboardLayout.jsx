@@ -16,6 +16,7 @@ import {
   LayoutTemplate,
   Stethoscope,
   Settings,
+  Building2
 } from "lucide-react";
 import useAuth from "../hooks/useAuth";
 import { NavLink, Outlet } from "react-router-dom";
@@ -112,6 +113,18 @@ const adminGroups = [
         Icon: Stethoscope,
         iconBg: "bg-rose-500/20",
         iconColor: "text-rose-400",
+      },
+    ],
+  },
+  {
+    label: "Branches",
+    links: [
+      {
+        name: "Manage Branches",
+        path: "/dashboard/manageBranches",
+        Icon: Building2,
+        iconBg: "bg-cyan-500/20",
+        iconColor: "text-cyan-400",
       },
     ],
   },
