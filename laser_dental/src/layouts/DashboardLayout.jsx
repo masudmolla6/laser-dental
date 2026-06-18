@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import useAuth from "../hooks/useAuth";
 import { NavLink, Outlet } from "react-router-dom";
+import DashboardSkeleton from "../components/DashboardSkeleton/DashboardSkeleton";
 
 const ToothSVG = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="currentColor">
@@ -176,16 +177,7 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white bg-gradient-to-br from-sky-500 to-indigo-600 animate-pulse">
-            <ToothSVG size={24} />
-          </div>
-          <p className="text-white/50 text-sm">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const groups = user?.email === "masudmolla2937@gmail.com" ? adminGroups : [];

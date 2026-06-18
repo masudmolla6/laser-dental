@@ -278,7 +278,10 @@ const Hero = () => {
               <div
                 className="w-72 h-72 md:w-[380px] md:h-[380px] rounded-full flex items-center justify-center relative"
                 style={{
-                  background: "linear-gradient(145deg, #e0f2fe 0%, #bae6fd 50%, #e0e7ff 100%)",
+                  backgroundImage:"url('https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=800')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
                   boxShadow: "0 0 0 12px rgba(14,165,233,0.08), 0 40px 80px -20px rgba(14,165,233,0.25)",
                 }}
               >
@@ -287,7 +290,7 @@ const Hero = () => {
                 </div>
 
                 {/* Clinic name overlay */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                {/* <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <div className="text-center">
                     <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-gradient-to-br from-sky-600 to-indigo-500">
                       <ToothIcon size={36} opacity={1} style={{ color: "#fff" }} />
@@ -302,7 +305,7 @@ const Hero = () => {
                       Est. 2010 · Dhaka
                     </p>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Floating card: Doctor info */}

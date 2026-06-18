@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import useCheckAdmin from "../hooks/useCheckAdmin";
+import DashboardSkeleton from "../components/DashboardSkeleton/DashboardSkeleton";
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -9,11 +10,7 @@ const AdminRoute = ({ children }) => {
 
   // 🔥 loading handle (VERY IMPORTANT)
   if (loading || isAdminLoading) {
-    return (
-      <div className="w-full h-screen flex justify-center items-center">
-        <span className="loading loading-ring loading-lg w-64"></span>
-      </div>
-    );
+    return <DashboardSkeleton></DashboardSkeleton>
   }
 
   // ✅ only admin allowed
