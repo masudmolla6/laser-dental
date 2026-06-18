@@ -118,6 +118,10 @@ const router=createBrowserRouter([
                 element:<BranchForm></BranchForm>
             },
             {
+                path:"editBranch/:id",
+                element:<BranchForm></BranchForm>
+            },
+            {
                 path: "adminProfile",
                 element:<AdminProfile></AdminProfile>
             }
