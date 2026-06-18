@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import useBranchesSecure from "../../../hooks/useBranchesSecure";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
-import { getBranchColors } from "../../utils/branchColors";
+import { getBranchColors } from "../../../utils/branchColors";
 
 // ── Skeleton ───────────────────────────────────────────────────────────────
 const BranchesSkeleton = () => (

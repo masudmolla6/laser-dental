@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { getBranchColors } from "../../utils/branchColors";
+import { getBranchColors } from "../../../utils/branchColors";
 import useBranches from "../../../hooks/useBranches";
 
 // ── Icons ──────────────────────────────────────────────────────────────────

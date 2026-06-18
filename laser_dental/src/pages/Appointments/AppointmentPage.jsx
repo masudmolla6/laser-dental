@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useLocation, Link } from "react-router-dom";
-import { getBranchColors } from "../utils/branchColors";
+import { getBranchColors } from "../../utils/branchColors";
 import Swal from "sweetalert2";
 import {
   Phone, MessageCircle, MapPin, Clock, User, Calendar,

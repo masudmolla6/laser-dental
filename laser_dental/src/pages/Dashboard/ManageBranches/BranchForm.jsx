@@ -8,7 +8,7 @@ import {
   ArrowLeft, Save, Loader2, ToggleLeft, ToggleRight, CalendarOff,
   Palette, Landmark, Bus, ShieldCheck, X,
 } from "lucide-react";
-import { BRANCH_COLOR_SCHEMES, getBranchColors } from "../../utils/branchColors";
+import { BRANCH_COLOR_SCHEMES, getBranchColors } from "../../../utils/branchColors";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import useBranchesSecure from "../../../hooks/useBranchesSecure";
 
