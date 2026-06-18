@@ -1,16 +1,18 @@
 // pages/Dashboard/Branches/BranchForm.jsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import {
   Building2, MapPin, Phone, Link2, Clock, Plus, Trash2,
   ArrowLeft, Save, Loader2, ToggleLeft, ToggleRight, CalendarOff,
+  Palette, Landmark, Bus, ShieldCheck, X,
 } from "lucide-react";
+import { BRANCH_COLOR_SCHEMES, getBranchColors } from "../../utils/branchColors";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import useBranchesSecure from "../../../hooks/useBranchesSecure";
 
-// ── Field wrapper (consistent with booking form style) ──────────────────
+// ── Field wrapper ────────────────────────────────────────────────────────
 const Field = ({ label, icon: Icon, error, required, children }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -41,9 +43,72 @@ const inputCls = (err) =>
 
 const DAYS = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
+// ── Tag input (for amenities / transport — free text chips) ────────────────
+const TagInput = ({ value = [], onChange, placeholder }) => {
+  const [draft, setDraft] = useState("");
+
+  const addTag = () => {
+    const trimmed = draft.trim();
+    if (trimmed && !value.includes(trimmed)) {
+      onChange([...value, trimmed]);
+    }
+    setDraft("");
+  };
+
+  const removeTag = (tag) => onChange(value.filter((t) => t !== tag));
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className={inputCls(false) + " flex-1"}
+          placeholder={placeholder}
+        />
+        <button
+          type="button"
+          onClick={addTag}
+          className="px-4 rounded-xl bg-sky-50 text-sky-600 font-bold text-xs hover:bg-sky-100 transition-colors flex items-center gap-1"
+        >
+          <Plus size={14} /> Add
+        </button>
+      </div>
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2.5">
+          {value.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1.5 text-xs font-medium pl-3 pr-1.5 py-1.5 rounded-full bg-slate-100 text-slate-600"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                className="w-4 h-4 rounded-full hover:bg-slate-300 flex items-center justify-center transition-colors"
+              >
+                <X size={10} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Main Component ────────────────────────────────────────────────────────
 const BranchForm = () => {
-  const { id } = useParams(); // present only in edit mode
+  const { id } = useParams();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
@@ -69,10 +134,16 @@ const BranchForm = () => {
       city: "Dhaka",
       address: "",
       phone: "",
+      whatsapp: "",
       mapLink: "",
+      mapEmbedSrc: "",
+      landmark: "",
+      colorScheme: "sky",
       isActive: true,
-      hours: [{ days: "Sat–Thu", time: "10:00 AM – 9:00 PM" }],
+      hours: [{ label: "Saturday – Thursday", morning: "", evening: "" }],
       closedDays: ["Friday"],
+      transport: [],
+      amenities: [],
     },
   });
 
@@ -80,6 +151,10 @@ const BranchForm = () => {
   const watchedClosedDays = watch("closedDays") || [];
   const watchedIsActive = watch("isActive");
   const watchedName = watch("name");
+  const watchedArea = watch("area");
+  const watchedColorScheme = watch("colorScheme");
+  const watchedTransport = watch("transport") || [];
+  const watchedAmenities = watch("amenities") || [];
 
   // Pre-fill form when editing
   useEffect(() => {
@@ -91,14 +166,20 @@ const BranchForm = () => {
         city: existingBranch.city || "Dhaka",
         address: existingBranch.address || "",
         phone: existingBranch.phone || "",
+        whatsapp: existingBranch.whatsapp || "",
         mapLink: existingBranch.mapLink || "",
+        mapEmbedSrc: existingBranch.mapEmbedSrc || "",
+        landmark: existingBranch.landmark || "",
+        colorScheme: existingBranch.colorScheme || "sky",
         isActive: existingBranch.isActive ?? true,
         hours: existingBranch.hours?.length
           ? existingBranch.hours
-          : [{ days: "Sat–Thu", time: "10:00 AM – 9:00 PM" }],
+          : [{ label: "Saturday – Thursday", morning: "", evening: "" }],
         closedDays: existingBranch.closedDays?.length
           ? existingBranch.closedDays
           : ["Friday"],
+        transport: existingBranch.transport || [],
+        amenities: existingBranch.amenities || [],
       });
     }
   }, [existingBranch, reset]);
@@ -161,6 +242,8 @@ const BranchForm = () => {
       });
     }
   };
+
+  const previewColors = getBranchColors(watchedColorScheme);
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 md:px-8">
@@ -228,19 +311,11 @@ const BranchForm = () => {
                   placeholder="e.g. Branch 3"
                 />
               </Field>
-              <Field
-                label="Slug (used internally)"
-                icon={Link2}
-                required
-                error={errors.slug?.message}
-              >
+              <Field label="Slug (used internally)" icon={Link2} required error={errors.slug?.message}>
                 <input
                   {...register("slug", {
                     required: "Slug is required",
-                    pattern: {
-                      value: /^[a-z0-9-]+$/,
-                      message: "Only lowercase letters, numbers and hyphens",
-                    },
+                    pattern: { value: /^[a-z0-9-]+$/, message: "Only lowercase letters, numbers and hyphens" },
                   })}
                   className={inputCls(!!errors.slug)}
                   type="text"
@@ -254,6 +329,24 @@ const BranchForm = () => {
                 )}
               </Field>
             </div>
+
+            {/* Color scheme */}
+            <Field label="Brand Color" icon={Palette}>
+              <div className="flex flex-wrap gap-2.5">
+                {Object.entries(BRANCH_COLOR_SCHEMES).map(([key, c]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setValue("colorScheme", key)}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      watchedColorScheme === key ? "ring-2 ring-offset-2 ring-slate-400 scale-110" : ""
+                    }`}
+                    style={{ background: `linear-gradient(135deg, ${c.color}, ${c.colorDark})` }}
+                    title={key}
+                  />
+                ))}
+              </div>
+            </Field>
 
             {/* Area + City */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -275,7 +368,7 @@ const BranchForm = () => {
               </Field>
             </div>
 
-            {/* Full Address */}
+            {/* Full Address + Landmark */}
             <Field label="Full Address" icon={MapPin} error={errors.address?.message}>
               <textarea
                 {...register("address")}
@@ -284,30 +377,60 @@ const BranchForm = () => {
                 rows={2}
               />
             </Field>
+            <Field label="Landmark (optional)" icon={Landmark} error={errors.landmark?.message}>
+              <input
+                {...register("landmark")}
+                className={inputCls(false)}
+                type="text"
+                placeholder="e.g. Near City Hospital"
+              />
+            </Field>
 
-            {/* Phone + Map Link */}
+            {/* Phone + WhatsApp */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Field label="Phone Number" icon={Phone} required error={errors.phone?.message}>
                 <input
                   {...register("phone", {
                     required: "Phone number is required",
-                    pattern: {
-                      value: /^01[3-9]\d{8}$/,
-                      message: "Enter a valid BD number (01XXXXXXXXX)",
-                    },
+                    pattern: { value: /^01[3-9]\d{8}$/, message: "Enter a valid BD number (01XXXXXXXXX)" },
                   })}
                   className={inputCls(!!errors.phone)}
                   type="tel"
                   placeholder="01XXXXXXXXX"
                 />
               </Field>
-              <Field label="Google Maps Link (optional)" icon={Link2} error={errors.mapLink?.message}>
+              <Field label="WhatsApp Number (optional)" icon={Phone} error={errors.whatsapp?.message}>
+                <input
+                  {...register("whatsapp")}
+                  className={inputCls(false)}
+                  type="tel"
+                  placeholder="8801XXXXXXXXX"
+                />
+                <p className="text-[10px] text-slate-400">Leave blank to auto-derive from phone number</p>
+              </Field>
+            </div>
+
+            {/* Map links */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Field label="Google Maps Link" icon={Link2} error={errors.mapLink?.message}>
                 <input
                   {...register("mapLink")}
                   className={inputCls(false)}
                   type="url"
-                  placeholder="https://maps.google.com/..."
+                  placeholder="https://maps.google.com/?q=..."
                 />
+                <p className="text-[10px] text-slate-400">Used for the "Get Directions" button</p>
+              </Field>
+              <Field label="Map Embed URL (optional)" icon={Link2} error={errors.mapEmbedSrc?.message}>
+                <input
+                  {...register("mapEmbedSrc")}
+                  className={inputCls(false)}
+                  type="url"
+                  placeholder="https://www.google.com/maps/embed?..."
+                />
+                <p className="text-[10px] text-slate-400">
+                  Leave blank to show a styled placeholder instead of a live map
+                </p>
               </Field>
             </div>
 
@@ -317,36 +440,48 @@ const BranchForm = () => {
                 <Clock size={12} className="text-sky-500" />
                 Operating Hours
               </label>
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2.5">
-                    <input
-                      {...register(`hours.${index}.days`, { required: true })}
-                      className={inputCls(false) + " flex-1"}
-                      placeholder="e.g. Sat–Thu"
-                    />
-                    <input
-                      {...register(`hours.${index}.time`, { required: true })}
-                      className={inputCls(false) + " flex-1"}
-                      placeholder="e.g. 10:00 AM – 9:00 PM"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      disabled={fields.length === 1}
-                      className="w-11 h-11 flex-shrink-0 rounded-xl border border-red-100 text-red-400 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                  <div key={field.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2.5">
+                    <div className="flex gap-2.5">
+                      <input
+                        {...register(`hours.${index}.label`, { required: true })}
+                        className={inputCls(false) + " flex-1"}
+                        placeholder="e.g. Saturday – Thursday"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        disabled={fields.length === 1}
+                        className="w-11 h-11 flex-shrink-0 rounded-xl border border-red-100 text-red-400 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <input
+                        {...register(`hours.${index}.morning`)}
+                        className={inputCls(false)}
+                        placeholder="🌅 Morning e.g. 10AM–2PM"
+                      />
+                      <input
+                        {...register(`hours.${index}.evening`)}
+                        className={inputCls(false)}
+                        placeholder="🌙 Evening e.g. 5PM–9PM"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 pl-1">
+                      Leave either field blank if the branch only runs one shift that day
+                    </p>
                   </div>
                 ))}
               </div>
               <button
                 type="button"
-                onClick={() => append({ days: "Sat–Thu", time: "" })}
+                onClick={() => append({ label: "Saturday – Thursday", morning: "", evening: "" })}
                 className="mt-3 flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-700 transition-colors"
               >
-                <Plus size={14} /> Add another time slot
+                <Plus size={14} /> Add another schedule row
               </button>
             </div>
 
@@ -377,14 +512,41 @@ const BranchForm = () => {
               </div>
             </div>
 
+            {/* Amenities */}
+            <Field label="Facilities / Amenities" icon={ShieldCheck}>
+              <TagInput
+                value={watchedAmenities}
+                onChange={(v) => setValue("amenities", v)}
+                placeholder="e.g. Free parking — press Enter"
+              />
+            </Field>
+
+            {/* Transport */}
+            <Field label="Getting There (Transport)" icon={Bus}>
+              <TagInput
+                value={watchedTransport}
+                onChange={(v) => setValue("transport", v)}
+                placeholder="e.g. Bus stop nearby — press Enter"
+              />
+            </Field>
+
             {/* Live preview */}
             {watchedName && (
-              <div className="bg-gradient-to-br from-sky-50 to-violet-50 rounded-xl p-4 border border-sky-100">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600 mb-1">
-                  Preview — How this appears on the booking form
+              <div
+                className="rounded-xl p-4 border"
+                style={{ background: previewColors.colorBg + "60", borderColor: previewColors.color + "30" }}
+              >
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: previewColors.colorDark }}>
+                  Preview — Branch Badge
                 </p>
-                <p className="text-sm font-bold text-slate-800">
-                  {watchedName}{watch("area") ? `, ${watch("area")}` : ""}
+                <span
+                  className="inline-block text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm text-white"
+                  style={{ background: `linear-gradient(135deg, ${previewColors.color}, ${previewColors.colorDark})` }}
+                >
+                  {watchedName}
+                </span>
+                <p className="text-sm font-bold text-slate-800 mt-2">
+                  {watchedName}{watchedArea ? `, ${watchedArea}` : ""}
                 </p>
               </div>
             )}

@@ -5,10 +5,10 @@ import Swal from "sweetalert2";
 import {
   Plus, MapPin, Phone, Clock, Pencil, Trash2, ToggleLeft,
   ToggleRight, Building2, CalendarOff, Loader2, AlertCircle,
-  GripVertical,
 } from "lucide-react";
 import useBranchesSecure from "../../../hooks/useBranchesSecure";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
+import { getBranchColors } from "../../utils/branchColors";
 
 // ── Skeleton ───────────────────────────────────────────────────────────────
 const BranchesSkeleton = () => (
@@ -39,6 +39,7 @@ const BranchesSkeleton = () => (
 const BranchCard = ({ branch, onToggle, onDelete, isLast, togglingId, deletingId }) => {
   const isToggling = togglingId === branch._id;
   const isDeleting = deletingId === branch._id;
+  const colors = getBranchColors(branch.colorScheme);
 
   return (
     <div
@@ -48,13 +49,14 @@ const BranchCard = ({ branch, onToggle, onDelete, isLast, togglingId, deletingId
           : "border-slate-200 opacity-70"
       }`}
     >
-      {/* Top status bar */}
+      {/* Top status bar — uses branch's own brand color when active */}
       <div
-        className={`h-1 w-full ${
+        className="h-1 w-full"
+        style={
           branch.isActive
-            ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
-            : "bg-slate-300"
-        }`}
+            ? { background: `linear-gradient(90deg, ${colors.color}, ${colors.colorDark})` }
+            : { background: "#cbd5e1" }
+        }
       />
 
       <div className="p-6">
@@ -62,9 +64,12 @@ const BranchCard = ({ branch, onToggle, onDelete, isLast, togglingId, deletingId
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-start gap-3">
             <div
-              className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                branch.isActive ? "bg-sky-50 text-sky-600" : "bg-slate-100 text-slate-400"
-              }`}
+              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={
+                branch.isActive
+                  ? { background: colors.colorBg, color: colors.color }
+                  : { background: "#f1f5f9", color: "#94a3b8" }
+              }
             >
               <Building2 size={20} />
             </div>
@@ -75,6 +80,9 @@ const BranchCard = ({ branch, onToggle, onDelete, isLast, togglingId, deletingId
               <p className="text-xs text-slate-400 mt-0.5">
                 {branch.area}, {branch.city || "Dhaka"}
               </p>
+              {branch.landmark && (
+                <p className="text-xs text-slate-400 mt-0.5">{branch.landmark}</p>
+              )}
             </div>
           </div>
 
@@ -103,13 +111,17 @@ const BranchCard = ({ branch, onToggle, onDelete, isLast, togglingId, deletingId
           <span>{branch.phone}</span>
         </div>
 
-        {/* Hours */}
+        {/* Hours — supports { label, morning, evening } */}
         {branch.hours?.length > 0 && (
           <div className="space-y-1 mb-2.5">
             {branch.hours.map((h, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm text-slate-500">
-                <Clock size={14} className="text-slate-400 flex-shrink-0" />
-                <span>{h.days}: {h.time}</span>
+              <div key={i} className="flex items-start gap-2 text-sm text-slate-500">
+                <Clock size={14} className="text-slate-400 flex-shrink-0 mt-0.5" />
+                <span>
+                  {h.label || h.days}
+                  {h.morning && ` — 🌅 ${h.morning}`}
+                  {h.evening && ` ${h.morning ? "·" : "—"} 🌙 ${h.evening}`}
+                </span>
               </div>
             ))}
           </div>
@@ -120,6 +132,22 @@ const BranchCard = ({ branch, onToggle, onDelete, isLast, togglingId, deletingId
           <div className="flex items-center gap-2 text-sm text-red-400 font-medium mb-4">
             <CalendarOff size={14} className="flex-shrink-0" />
             <span>Closed: {branch.closedDays.join(", ")}</span>
+          </div>
+        )}
+
+        {/* Amenities preview */}
+        {branch.amenities?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {branch.amenities.slice(0, 3).map((a) => (
+              <span key={a} className="text-[10px] font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-500">
+                {a}
+              </span>
+            ))}
+            {branch.amenities.length > 3 && (
+              <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-400">
+                +{branch.amenities.length - 3} more
+              </span>
+            )}
           </div>
         )}
 

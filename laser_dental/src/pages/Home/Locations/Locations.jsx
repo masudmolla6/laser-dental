@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { getBranchColors } from "../../utils/branchColors";
+import useBranches from "../../../hooks/useBranches";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const LocationIcon = ({ size = 20 }) => (
@@ -37,135 +39,109 @@ const CheckIcon = () => (
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
-const BusIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="2" y="4" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="7" cy="20" r="2"/><circle cx="17" cy="20" r="2"/><path d="M7 18v-4m10 4v-4"/>
-  </svg>
-);
-const ParkingIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 010 6H9"/>
-  </svg>
-);
-const WheelchairIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="4" r="2"/><path d="M9 9h5l2 7H8"/><path d="M8 16a4 4 0 108 0"/>
-  </svg>
+
+// ── Skeleton (shown while branches load) ────────────────────────────────────
+const LocationsSkeleton = () => (
+  <div className="min-h-screen bg-[#f8fafc] py-20 px-5 md:px-10">
+    <div className="max-w-5xl mx-auto flex flex-col gap-10">
+      <div className="w-72 h-10 bg-slate-200 rounded-xl mx-auto animate-pulse" />
+      {[1, 2].map((i) => (
+        <div key={i} className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden border border-gray-100">
+          <div className="h-72 lg:h-auto min-h-[360px] bg-slate-100 animate-pulse" />
+          <div className="bg-white p-8 flex flex-col gap-4">
+            <div className="w-1/2 h-7 bg-slate-200 rounded animate-pulse" />
+            <div className="w-full h-20 bg-slate-100 rounded-xl animate-pulse" />
+            <div className="w-full h-20 bg-slate-100 rounded-xl animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
 );
 
-// ── Data ───────────────────────────────────────────────────────────────────
-const BRANCHES = [
-  {
-    id: "branch1",
-    label: "Branch 1",
-    name: "Laser Dental Point",
-    area: "Location TBD",
-    fullAddress: "Full address here, Dhaka — 1XXX, Bangladesh",
-    phone: "01745565435",
-    whatsapp: "8801745565435",
-    // Replace with real Google Maps embed src
-    mapSrc: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3648.2!2d90.4!3d23.8!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDQ4JzAwLjAiTiA5MMKwMjQnMDAuMCJF!5e0!3m2!1sen!2sbd!4v1234567890",
-    mapLink: "https://maps.google.com/?q=Dhaka+Bangladesh",
-    color: "#0ea5e9",
-    colorDark: "#0284c7",
-    colorBg: "#e0f2fe",
-    schedule: [
-      { label: "Saturday – Thursday", morning: "10:00 AM – 2:00 PM", evening: "5:00 PM – 9:00 PM" },
-    ],
-    closed: "Friday",
-    transport: ["Bus stop nearby", "Easy rickshaw access"],
-    amenities: ["Free parking", "Wheelchair accessible", "AC waiting area"],
-    landmark: "Near [Landmark TBD]",
-  },
-  {
-    id: "branch2",
-    label: "Branch 2",
-    name: "Laser Dental Point",
-    area: "Location TBD",
-    fullAddress: "Full address here, Dhaka — 1XXX, Bangladesh",
-    phone: "01745565435",
-    whatsapp: "8801745565435",
-    // Replace with real Google Maps embed src
-    mapSrc: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3648.2!2d90.35!3d23.75!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDQ1JzAwLjAiTiA5MMKwMjEnMDAuMCJF!5e0!3m2!1sen!2sbd!4v1234567891",
-    mapLink: "https://maps.google.com/?q=Dhaka+Bangladesh",
-    color: "#8b5cf6",
-    colorDark: "#7c3aed",
-    colorBg: "#ede9fe",
-    schedule: [
-      { label: "Saturday – Thursday", evening: "3:00 PM – 9:00 PM" },
-    ],
-    closed: "Friday",
-    transport: ["Bus stop 5 min walk", "CNG available"],
-    amenities: ["Street parking", "Ground floor", "AC waiting area"],
-    landmark: "Near [Landmark TBD]",
-  },
-];
+// ── Empty state (no active branches) ────────────────────────────────────────
+const LocationsEmpty = () => (
+  <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center py-24 px-5">
+    <div className="text-center max-w-md">
+      <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-5">
+        <LocationIcon size={32} />
+      </div>
+      <h2 className="text-xl font-bold text-gray-800 mb-2">No branches available right now</h2>
+      <p className="text-gray-400 text-sm mb-6">
+        Please call us directly and we'll guide you to the nearest clinic.
+      </p>
+      <a
+        href="tel:01745565435"
+        className="inline-flex items-center gap-2 px-6 py-3 bg-sky-600 text-white rounded-xl font-semibold hover:bg-sky-700 transition-colors"
+      >
+        <PhoneIcon /> 01745565435
+      </a>
+    </div>
+  </div>
+);
 
-// ── Map placeholder (shown when real embed is unavailable) ─────────────────
-const MapPlaceholder = ({ branch, onNavigate }) => (
+// ── Map placeholder (shown when no real embed link is set) ─────────────────
+const MapPlaceholder = ({ branch, colors, onNavigate }) => (
   <div
     className="w-full h-full flex flex-col items-center justify-center gap-4 relative overflow-hidden"
-    style={{ background: `linear-gradient(135deg, ${branch.colorBg} 0%, #f8fafc 100%)` }}
+    style={{ background: `linear-gradient(135deg, ${colors.colorBg} 0%, #f8fafc 100%)` }}
   >
-    {/* Grid pattern */}
     <div className="absolute inset-0 opacity-[0.06]"
       style={{
-        backgroundImage: `linear-gradient(${branch.color} 1px, transparent 1px), linear-gradient(90deg, ${branch.color} 1px, transparent 1px)`,
+        backgroundImage: `linear-gradient(${colors.color} 1px, transparent 1px), linear-gradient(90deg, ${colors.color} 1px, transparent 1px)`,
         backgroundSize: "40px 40px",
       }}
     />
-    {/* Roads */}
     <div className="absolute inset-0 flex items-center justify-center">
-      <div className="w-full h-px opacity-20" style={{ background: branch.color }} />
-      <div className="absolute w-px h-full opacity-20" style={{ background: branch.color }} />
+      <div className="w-full h-px opacity-20" style={{ background: colors.color }} />
+      <div className="absolute w-px h-full opacity-20" style={{ background: colors.color }} />
     </div>
-    {/* Pin */}
     <div className="relative z-10 flex flex-col items-center gap-3">
       <div className="relative">
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${branch.color}, ${branch.colorDark})` }}
+          style={{ background: `linear-gradient(135deg, ${colors.color}, ${colors.colorDark})` }}
         >
           <LocationIcon size={28} />
         </div>
         <div
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45"
-          style={{ background: branch.colorDark }}
+          style={{ background: colors.colorDark }}
         />
-        {/* Pulse rings */}
         <div
           className="absolute inset-0 rounded-full animate-ping opacity-20"
-          style={{ background: branch.color }}
+          style={{ background: colors.color }}
         />
       </div>
       <div className="text-center mt-2">
         <p className="font-bold text-gray-800 text-sm">{branch.name}</p>
-        <p className="text-xs font-medium mt-0.5" style={{ color: branch.color }}>{branch.area}</p>
-        <p className="text-xs text-gray-400 mt-1">{branch.landmark}</p>
+        <p className="text-xs font-medium mt-0.5" style={{ color: colors.color }}>
+          {branch.area}, {branch.city || "Dhaka"}
+        </p>
+        {branch.landmark && <p className="text-xs text-gray-400 mt-1">{branch.landmark}</p>}
       </div>
     </div>
-    {/* Navigate button */}
-    <button
-      onClick={onNavigate}
-      className="relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-xs font-bold shadow-lg transition-all active:scale-95 hover:opacity-90"
-      style={{ background: `linear-gradient(135deg, ${branch.color}, ${branch.colorDark})` }}
-    >
-      <NavigateIcon />
-      Open in Google Maps
-    </button>
-    <p className="text-xs text-gray-400 relative z-10">
-      Replace mapSrc with your Google Maps embed link
-    </p>
+    {branch.mapLink && (
+      <button
+        onClick={onNavigate}
+        className="relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-xs font-bold shadow-lg transition-all active:scale-95 hover:opacity-90"
+        style={{ background: `linear-gradient(135deg, ${colors.color}, ${colors.colorDark})` }}
+      >
+        <NavigateIcon />
+        Open in Google Maps
+      </button>
+    )}
   </div>
 );
 
 // ── Single branch section ──────────────────────────────────────────────────
 const BranchSection = ({ branch, reversed }) => {
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [useEmbed, setUseEmbed] = useState(false); // set true when real mapSrc is added
+  const colors = getBranchColors(branch.colorScheme);
+  const useEmbed = Boolean(branch.mapEmbedSrc);
 
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden border border-gray-100`}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden border border-gray-100"
       style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.08)" }}>
 
       {/* Map side */}
@@ -178,8 +154,8 @@ const BranchSection = ({ branch, reversed }) => {
               </div>
             )}
             <iframe
-              title={`${branch.label} Map`}
-              src={branch.mapSrc}
+              title={`${branch.name} Map`}
+              src={branch.mapEmbedSrc}
               className="w-full h-full border-0"
               allowFullScreen=""
               loading="lazy"
@@ -188,16 +164,20 @@ const BranchSection = ({ branch, reversed }) => {
             />
           </>
         ) : (
-          <MapPlaceholder branch={branch} onNavigate={() => window.open(branch.mapLink, "_blank")} />
+          <MapPlaceholder
+            branch={branch}
+            colors={colors}
+            onNavigate={() => window.open(branch.mapLink, "_blank")}
+          />
         )}
 
         {/* Branch badge overlaid on map */}
         <div className="absolute top-4 left-4 z-10">
           <span
             className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-md text-white"
-            style={{ background: `linear-gradient(135deg, ${branch.color}, ${branch.colorDark})` }}
+            style={{ background: `linear-gradient(135deg, ${colors.color}, ${colors.colorDark})` }}
           >
-            {branch.label}
+            {branch.name}
           </span>
         </div>
       </div>
@@ -212,103 +192,137 @@ const BranchSection = ({ branch, reversed }) => {
             <span className="text-xs font-semibold text-emerald-600">Open Now</span>
           </div>
           <h2 className="font-display text-2xl font-bold text-gray-900">{branch.name}</h2>
-          <p className="font-semibold mt-0.5" style={{ color: branch.color }}>{branch.area}</p>
+          <p className="font-semibold mt-0.5" style={{ color: colors.color }}>
+            {branch.area}, {branch.city || "Dhaka"}
+          </p>
         </div>
 
         {/* Address */}
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-            style={{ background: branch.colorBg, color: branch.color }}>
-            <LocationIcon size={17} />
+        {branch.address && (
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+              style={{ background: colors.colorBg, color: colors.color }}>
+              <LocationIcon size={17} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Address</p>
+              <p className="text-sm text-gray-700 font-medium leading-relaxed">{branch.address}</p>
+              {branch.landmark && <p className="text-xs text-gray-400 mt-1">{branch.landmark}</p>}
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Address</p>
-            <p className="text-sm text-gray-700 font-medium leading-relaxed">{branch.fullAddress}</p>
-            <p className="text-xs text-gray-400 mt-1">{branch.landmark}</p>
-          </div>
-        </div>
+        )}
 
         {/* Schedule */}
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-            style={{ background: branch.colorBg, color: branch.color }}>
-            <ClockIcon size={17} />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Schedule</p>
-            <div className="flex flex-col gap-2">
-              {branch.schedule.map((s, i) => (
-                <div key={i} className="rounded-xl p-3 flex flex-col gap-1.5"
-                  style={{ background: branch.colorBg + "99" }}>
-                  <p className="text-xs font-semibold text-gray-600">{s.label}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {s.morning && (
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-lg"
-                        style={{ background: branch.color + "18", color: branch.colorDark }}>
-                        🌅 {s.morning}
-                      </span>
-                    )}
-                    {s.evening && (
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-lg"
-                        style={{ background: branch.color + "18", color: branch.colorDark }}>
-                        🌙 {s.evening}
-                      </span>
-                    )}
+        {branch.hours?.length > 0 && (
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+              style={{ background: colors.colorBg, color: colors.color }}>
+              <ClockIcon size={17} />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Schedule</p>
+              <div className="flex flex-col gap-2">
+                {branch.hours.map((s, i) => (
+                  <div key={i} className="rounded-xl p-3 flex flex-col gap-1.5"
+                    style={{ background: colors.colorBg + "99" }}>
+                    <p className="text-xs font-semibold text-gray-600">{s.label || s.days}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {s.morning && (
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                          style={{ background: colors.color + "18", color: colors.colorDark }}>
+                          🌅 {s.morning}
+                        </span>
+                      )}
+                      {s.evening && (
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                          style={{ background: colors.color + "18", color: colors.colorDark }}>
+                          🌙 {s.evening}
+                        </span>
+                      )}
+                      {/* Fallback for the simple { days, time } shape used elsewhere */}
+                      {!s.morning && !s.evening && s.time && (
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                          style={{ background: colors.color + "18", color: colors.colorDark }}>
+                          🕐 {s.time}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
-                <span className="text-sm text-red-400 font-medium">{branch.closed}: Closed</span>
+                ))}
+                {branch.closedDays?.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
+                    <span className="text-sm text-red-400 font-medium">
+                      {branch.closedDays.join(", ")}: Closed
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Phone */}
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: branch.colorBg, color: branch.color }}>
+            style={{ background: colors.colorBg, color: colors.color }}>
             <PhoneIcon size={17} />
           </div>
           <div>
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Phone</p>
             <a href={`tel:${branch.phone}`}
               className="text-base font-bold hover:underline"
-              style={{ color: branch.color }}>
+              style={{ color: colors.color }}>
               {branch.phone}
             </a>
           </div>
         </div>
 
         {/* Amenities */}
-        <div>
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Facilities</p>
-          <div className="flex flex-wrap gap-2">
-            {branch.amenities.map((a) => (
-              <span key={a}
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border"
-                style={{ borderColor: branch.color + "30", color: branch.colorDark, background: branch.colorBg + "88" }}>
-                <span className="text-emerald-500"><CheckIcon /></span>
-                {a}
-              </span>
-            ))}
+        {branch.amenities?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Facilities</p>
+            <div className="flex flex-wrap gap-2">
+              {branch.amenities.map((a) => (
+                <span key={a}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border"
+                  style={{ borderColor: colors.color + "30", color: colors.colorDark, background: colors.colorBg + "88" }}>
+                  <span className="text-emerald-500"><CheckIcon /></span>
+                  {a}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Transport */}
+        {branch.transport?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Getting There</p>
+            <div className="flex flex-wrap gap-2">
+              {branch.transport.map((t) => (
+                <span key={t}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-50 text-slate-600 border border-slate-100">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex gap-3 pt-1">
-          <a href={branch.mapLink} target="_blank" rel="noreferrer"
+          <a href={branch.mapLink || "#"} target="_blank" rel="noreferrer"
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-white text-sm font-bold transition-all active:scale-95 hover:opacity-90 group"
             style={{
-              background: `linear-gradient(135deg, ${branch.color}, ${branch.colorDark})`,
-              boxShadow: `0 4px 16px ${branch.color}40`,
+              background: `linear-gradient(135deg, ${colors.color}, ${colors.colorDark})`,
+              boxShadow: `0 4px 16px ${colors.color}40`,
             }}>
             <NavigateIcon />
             Get Directions
             <span className="group-hover:translate-x-0.5 transition-transform"><ArrowRight /></span>
           </a>
-          <a href={`https://wa.me/${branch.whatsapp}`} target="_blank" rel="noreferrer"
+          <a href={`https://wa.me/${branch.whatsapp || branch.phone}`} target="_blank" rel="noreferrer"
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-emerald-700 text-sm font-bold transition-all active:scale-95 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100">
             <WhatsAppIcon />
             WhatsApp
@@ -321,6 +335,14 @@ const BranchSection = ({ branch, reversed }) => {
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 const Locations = () => {
+  const [branches, isLoading] = useBranches();
+
+  if (isLoading) return <LocationsSkeleton />;
+  if (!branches || branches.length === 0) return <LocationsEmpty />;
+
+  const branchCountLabel = branches.length === 1 ? "Our Location" : `Our ${branches.length} Locations`;
+  const primaryPhone = branches[0]?.phone || "01745565435";
+
   return (
     <div className="min-h-screen bg-[#f8fafc]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
@@ -356,22 +378,25 @@ const Locations = () => {
             <div className="w-8 h-px bg-sky-400" />
           </div>
           <h1 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
-            Our <span className="shimmer">Two Locations</span>
+            <span className="shimmer">{branchCountLabel}</span>
           </h1>
           <p className="text-white/50 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-            One doctor, two clinics — both in Dhaka. Visit whichever branch is most convenient for you.
+            One doctor, {branches.length} clinic{branches.length !== 1 ? "s" : ""} — all in Dhaka. Visit whichever branch is most convenient for you.
           </p>
 
           {/* Branch pills */}
-          <div className="flex justify-center gap-3 mt-8">
-            {BRANCHES.map((b) => (
-              <a key={b.id} href={`#${b.id}`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-semibold border border-white/20 hover:border-white/40 hover:bg-white/10 transition-all"
-              >
-                <div className="w-2 h-2 rounded-full" style={{ background: b.color }} />
-                {b.label} · {b.area}
-              </a>
-            ))}
+          <div className="flex flex-wrap justify-center gap-3 mt-8">
+            {branches.map((b) => {
+              const colors = getBranchColors(b.colorScheme);
+              return (
+                <a key={b._id} href={`#${b.slug}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white text-sm font-semibold border border-white/20 hover:border-white/40 hover:bg-white/10 transition-all"
+                >
+                  <div className="w-2 h-2 rounded-full" style={{ background: colors.color }} />
+                  {b.name} · {b.area}
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -382,7 +407,7 @@ const Locations = () => {
           <div className="bg-white rounded-2xl border border-gray-100 px-6 py-5 grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100"
             style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
             {[
-              { icon: "🏥", value: "2", label: "Clinics in Dhaka" },
+              { icon: "🏥", value: String(branches.length), label: `Clinic${branches.length !== 1 ? "s" : ""} in Dhaka` },
               { icon: "👨‍⚕️", value: "1", label: "Dedicated Doctor" },
               { icon: "📅", value: "6 days", label: "Open per week" },
               { icon: "⚡", value: "30 min", label: "Appointment confirm" },
@@ -400,8 +425,8 @@ const Locations = () => {
       {/* ── Branch sections ──────────────────────────────────────────────── */}
       <section className="px-5 md:px-10 pb-24">
         <div className="max-w-5xl mx-auto flex flex-col gap-10">
-          {BRANCHES.map((branch, i) => (
-            <div key={branch.id} id={branch.id}>
+          {branches.map((branch, i) => (
+            <div key={branch._id} id={branch.slug}>
               <BranchSection branch={branch} reversed={i % 2 !== 0} />
             </div>
           ))}
@@ -434,10 +459,10 @@ const Locations = () => {
                   Book Appointment
                   <span className="group-hover:translate-x-1 transition-transform"><ArrowRight /></span>
                 </Link>
-                <a href="tel:01745565435"
+                <a href={`tel:${primaryPhone}`}
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-sm border border-white/20 text-white/80 hover:bg-white/10 transition-all active:scale-95">
                   <PhoneIcon />
-                  01745565435
+                  {primaryPhone}
                 </a>
               </div>
             </div>

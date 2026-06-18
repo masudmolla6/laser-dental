@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useLocation, Link } from "react-router-dom";
+import { getBranchColors } from "../utils/branchColors";
 import Swal from "sweetalert2";
 import {
   Phone, MessageCircle, MapPin, Clock, User, Calendar,
@@ -28,7 +29,7 @@ const SERVICES = [
   "Other",
 ];
 
-const BRANCH_COLORS = ["#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
+const BRANCH_COLORS = ["#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"]; // fallback only, prefer getBranchColors(branch.colorScheme)
 
 const TIME_SLOTS = [
   "10:00 AM", "11:00 AM", "12:00 PM",
@@ -377,9 +378,10 @@ const AppointmentForm = ({ preSelectedService, branches, branchesLoading }) => {
                   rules={{ required: "Please select a branch" }}
                   render={({ field }) => (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
-                      {branches.map((loc, idx) => {
+                      {branches.map((loc) => {
                         const selected = field.value === loc.slug;
-                        const color = BRANCH_COLORS[idx % BRANCH_COLORS.length];
+                        const colors = getBranchColors(loc.colorScheme);
+                        const firstHour = loc.hours?.[0];
                         return (
                           <button
                             key={loc._id}
@@ -398,16 +400,18 @@ const AppointmentForm = ({ preSelectedService, branches, branchesLoading }) => {
                             )}
                             <div
                               className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mb-2"
-                              style={{ background: color + "18", color }}
+                              style={{ background: colors.color + "18", color: colors.colorDark }}
                             >
                               {loc.name}
                             </div>
                             <p className="font-bold text-slate-800 text-sm">
                               {loc.area}, {loc.city || "Dhaka"}
                             </p>
-                            {loc.hours?.[0] && (
+                            {firstHour && (
                               <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                                <Clock size={10} /> {loc.hours[0].days}: {loc.hours[0].time}
+                                <Clock size={10} />
+                                {firstHour.label || firstHour.days}:{" "}
+                                {[firstHour.morning, firstHour.evening].filter(Boolean).join(" · ") || firstHour.time}
                               </p>
                             )}
                           </button>
@@ -766,14 +770,14 @@ const AppointmentPage = () => {
                 <p className="text-sm text-slate-400">No branch info available right now.</p>
               ) : (
                 <div className="space-y-5">
-                  {branches.map((loc, idx) => {
-                    const color = BRANCH_COLORS[idx % BRANCH_COLORS.length];
+                  {branches.map((loc) => {
+                    const colors = getBranchColors(loc.colorScheme);
                     return (
                       <div key={loc._id}>
                         <div className="flex items-center gap-2 mb-2.5">
                           <span
                             className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
-                            style={{ background: color + "15", color }}
+                            style={{ background: colors.color + "15", color: colors.colorDark }}
                           >
                             {loc.name}
                           </span>
@@ -781,7 +785,9 @@ const AppointmentPage = () => {
                         </div>
                         {loc.hours?.map((h, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm text-slate-600 mb-1 ml-1">
-                            <Clock size={12} className="text-slate-400" /> {h.days}: {h.time}
+                            <Clock size={12} className="text-slate-400" />
+                            {h.label || h.days}:{" "}
+                            {[h.morning, h.evening].filter(Boolean).join(" · ") || h.time}
                           </div>
                         ))}
                         {loc.closedDays?.length > 0 && (
