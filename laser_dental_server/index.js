@@ -743,16 +743,31 @@ async function run() {
     });
 
 
+        
     // ══════════════════════════════════════════════════════════════════════
-    // BRANCH ROUTES — add this block inside run() in your index.js,
-    // near the other route sections (e.g. after SERVICES ROUTES).
-    // Also add this line near your other collections:
+    // BRANCH ROUTES (v2 — expanded schema) — add this block inside run() in
+    // your index.js, near the other route sections (e.g. after SERVICES ROUTES).
     //
+    // Also add this line near your other collections:
     //   const branchesCollection = client.db("Laser_Dental").collection("branches");
     //
     // ══════════════════════════════════════════════════════════════════════
+    //
+    // EXPANDED SCHEMA — fields now stored per branch:
+    // {
+    //   name, slug, area, city, address, phone, whatsapp,
+    //   mapLink,        // Google Maps share/search link — used for "Get Directions"
+    //   mapEmbedSrc,    // Google Maps EMBED iframe src (optional — falls back to placeholder if empty)
+    //   landmark,       // e.g. "Near City Hospital"
+    //   colorScheme,    // "sky" | "violet" | "emerald" | "amber" | "rose" | "cyan"
+    //   hours: [{ label, morning, evening }],   // label e.g. "Saturday – Thursday"
+    //   closedDays: ["Friday"],
+    //   transport: ["Bus stop nearby", ...],
+    //   amenities: ["Free parking", ...],
+    //   isActive, order, createdAt, updatedAt
+    // }
 
-    // GET all — public (Appointment form এর জন্য, শুধু active branches)
+    // GET all — public (Appointment form & Locations page, শুধু active branches)
     app.get("/branches", async (req, res) => {
       try {
         const result = await branchesCollection
@@ -807,7 +822,7 @@ async function run() {
       try {
         const data = req.body;
 
-        // Validation
+        // Validation — core required fields
         if (!data.name || !data.slug || !data.area || !data.phone) {
           return res.status(400).send({
             success: false,
@@ -833,19 +848,25 @@ async function run() {
         const nextOrder = lastBranch.length > 0 ? (lastBranch[0].order || 0) + 1 : 1;
 
         const branch = {
-          name:       data.name.trim(),
-          slug:       data.slug.trim().toLowerCase(),
-          area:       data.area.trim(),
-          city:       data.city?.trim() || "Dhaka",
-          address:    data.address?.trim() || "",
-          phone:      data.phone.trim(),
-          mapLink:    data.mapLink?.trim() || "",
-          hours:      Array.isArray(data.hours) ? data.hours : [],
-          closedDays: Array.isArray(data.closedDays) ? data.closedDays : ["Friday"],
-          isActive:   data.isActive !== undefined ? data.isActive : true,
-          order:      nextOrder,
-          createdAt:  new Date(),
-          updatedAt:  new Date(),
+          name:         data.name.trim(),
+          slug:         data.slug.trim().toLowerCase(),
+          area:         data.area.trim(),
+          city:         data.city?.trim() || "Dhaka",
+          address:      data.address?.trim() || "",
+          phone:        data.phone.trim(),
+          whatsapp:     data.whatsapp?.trim() || data.phone.replace(/^0/, "880").trim(),
+          mapLink:      data.mapLink?.trim() || "",
+          mapEmbedSrc:  data.mapEmbedSrc?.trim() || "",
+          landmark:     data.landmark?.trim() || "",
+          colorScheme:  data.colorScheme || "sky",
+          hours:        Array.isArray(data.hours) ? data.hours : [],
+          closedDays:   Array.isArray(data.closedDays) ? data.closedDays : ["Friday"],
+          transport:    Array.isArray(data.transport) ? data.transport : [],
+          amenities:    Array.isArray(data.amenities) ? data.amenities : [],
+          isActive:     data.isActive !== undefined ? data.isActive : true,
+          order:        nextOrder,
+          createdAt:    new Date(),
+          updatedAt:    new Date(),
         };
 
         const result = await branchesCollection.insertOne(branch);
@@ -861,7 +882,7 @@ async function run() {
       }
     });
 
-    // PATCH — update branch (info, hours, isActive toggle) — admin only
+    // PATCH — update branch (any field, including isActive toggle) — admin only
     app.patch("/branches/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
       try {
         const id     = req.params.id;
@@ -967,7 +988,6 @@ async function run() {
         res.status(500).send({ success: false, message: "Failed to delete branch" });
       }
     });
-
 
 
 
