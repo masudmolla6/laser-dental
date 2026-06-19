@@ -991,7 +991,6 @@ async function run() {
     });
 
 
-
     // ══════════════════════════════════════════════════════════════════════
     // DOCTOR ROUTES — add this block inside run() in your index.js,
     // near the other route sections (e.g. after BRANCH ROUTES).
@@ -1003,17 +1002,40 @@ async function run() {
     //
     // SCHEMA — fields stored per doctor:
     // {
-    //   name, slug, title, degrees: [],
+    //   name, slug, title,
+    //   degrees: [{ title, certificateImage }],   // certificateImage is optional — URL to scanned certificate photo
     //   photo,
     //   specializations: [{ iconKey, label, color, bg }],
     //   bio, quote,
     //   achievements: [{ iconKey, text }],
     //   branchSlugs: ["mirpur", "uttara"],   // multi-select — which branches this doctor sits at
+    //   yearsExperience, patientsCount,
     //   isFeatured,    // shown in the Home page doctor section
     //   isActive,
     //   order,
     //   createdAt, updatedAt
     // }
+
+    // Normalizes the `degrees` field — accepts either the old plain-string
+    // format (backward compatibility for data added before certificate
+    // images existed) or the new { title, certificateImage } object format.
+    const sanitizeDegrees = (degrees) => {
+      if (!Array.isArray(degrees)) return [];
+      return degrees
+        .map((d) => {
+          if (typeof d === "string") {
+            return d.trim() ? { title: d.trim(), certificateImage: "" } : null;
+          }
+          if (d && typeof d === "object" && d.title?.trim()) {
+            return {
+              title: d.title.trim(),
+              certificateImage: d.certificateImage?.trim() || "",
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+    };
 
     // GET all — public (Doctors listing page, শুধু active doctors)
     app.get("/doctors", async (req, res) => {
@@ -1130,13 +1152,15 @@ async function run() {
           name:            data.name.trim(),
           slug:            data.slug.trim().toLowerCase(),
           title:           data.title.trim(),
-          degrees:         Array.isArray(data.degrees) ? data.degrees : [],
+          degrees:         sanitizeDegrees(data.degrees),
           photo:           data.photo?.trim() || "",
           specializations: Array.isArray(data.specializations) ? data.specializations : [],
           bio:             data.bio?.trim() || "",
           quote:           data.quote?.trim() || "",
           achievements:    Array.isArray(data.achievements) ? data.achievements : [],
           branchSlugs:     Array.isArray(data.branchSlugs) ? data.branchSlugs : [],
+          yearsExperience: data.yearsExperience !== undefined ? Number(data.yearsExperience) : 0,
+          patientsCount:   data.patientsCount !== undefined ? Number(data.patientsCount) : 0,
           isFeatured:      data.isFeatured !== undefined ? data.isFeatured : false,
           isActive:        data.isActive !== undefined ? data.isActive : true,
           order:           nextOrder,
@@ -1168,6 +1192,11 @@ async function run() {
         }
 
         delete update._id;
+
+        // Normalize degrees if it's part of this update (same as POST)
+        if (update.degrees !== undefined) {
+          update.degrees = sanitizeDegrees(update.degrees);
+        }
 
         // If slug is being changed, make sure it's still unique
         if (update.slug) {
@@ -1252,7 +1281,6 @@ async function run() {
         res.status(500).send({ success: false, message: "Failed to delete doctor" });
       }
     });
-
 
 
 
