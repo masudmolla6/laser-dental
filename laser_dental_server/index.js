@@ -36,6 +36,7 @@ async function run() {
     const servicesCollection = client.db("Laser_Dental").collection("services");
     const reviewsCollection = client.db("Laser_Dental").collection("reviews");
     const branchesCollection = client.db("Laser_Dental").collection("branches");
+    const doctorsCollection = client.db("Laser_Dental").collection("doctors");
 
     // ── Test route ─────────────────────────────────────────────────────
     app.get("/secure", verifyToken, (req, res) => {
@@ -988,6 +989,270 @@ async function run() {
         res.status(500).send({ success: false, message: "Failed to delete branch" });
       }
     });
+
+
+
+    // ══════════════════════════════════════════════════════════════════════
+    // DOCTOR ROUTES — add this block inside run() in your index.js,
+    // near the other route sections (e.g. after BRANCH ROUTES).
+    //
+    // Also add this line near your other collections:
+    //   const doctorsCollection = client.db("Laser_Dental").collection("doctors");
+    //
+    // ══════════════════════════════════════════════════════════════════════
+    //
+    // SCHEMA — fields stored per doctor:
+    // {
+    //   name, slug, title, degrees: [],
+    //   photo,
+    //   specializations: [{ iconKey, label, color, bg }],
+    //   bio, quote,
+    //   achievements: [{ iconKey, text }],
+    //   branchSlugs: ["mirpur", "uttara"],   // multi-select — which branches this doctor sits at
+    //   isFeatured,    // shown in the Home page doctor section
+    //   isActive,
+    //   order,
+    //   createdAt, updatedAt
+    // }
+
+    // GET all — public (Doctors listing page, শুধু active doctors)
+    app.get("/doctors", async (req, res) => {
+      try {
+        const result = await doctorsCollection
+          .find({ isActive: true })
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, doctors: result });
+      } catch (error) {
+        console.error("GET /doctors:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch doctors" });
+      }
+    });
+
+    // GET featured doctor(s) — public (Home page section এর জন্য)
+    app.get("/doctors/featured", async (req, res) => {
+      try {
+        const result = await doctorsCollection
+          .find({ isActive: true, isFeatured: true })
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, doctors: result });
+      } catch (error) {
+        console.error("GET /doctors/featured:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch featured doctors" });
+      }
+    });
+
+    // GET single by slug — public (Doctor details page এর জন্য, e.g. /doctors/dr-fatema-khanam)
+    app.get("/doctors/slug/:slug", async (req, res) => {
+      try {
+        const { slug } = req.params;
+        const result = await doctorsCollection.findOne({ slug, isActive: true });
+
+        if (!result) {
+          return res.status(404).send({ success: false, message: "Doctor not found" });
+        }
+
+        res.send({ success: true, doctor: result });
+      } catch (error) {
+        console.error("GET /doctors/slug/:slug:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch doctor" });
+      }
+    });
+
+    // GET all for admin — includes inactive doctors
+    app.get("/admin/doctors", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const result = await doctorsCollection
+          .find()
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, doctors: result, total: result.length });
+      } catch (error) {
+        console.error("GET /admin/doctors:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch doctors" });
+      }
+    });
+
+    // GET single by ID — admin only (for edit form pre-fill)
+    app.get("/doctors/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid doctor ID format" });
+        }
+
+        const result = await doctorsCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!result) {
+          return res.status(404).send({ success: false, message: "Doctor not found" });
+        }
+
+        res.send({ success: true, doctor: result });
+      } catch (error) {
+        console.error("GET /doctors/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch doctor" });
+      }
+    });
+
+    // POST — add new doctor — admin only
+    app.post("/doctors", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const data = req.body;
+
+        // Validation — core required fields
+        if (!data.name || !data.slug || !data.title) {
+          return res.status(400).send({
+            success: false,
+            message: "Name, slug and title are required",
+          });
+        }
+
+        // Slug must be unique — used in the doctor profile URL (/doctors/:slug)
+        const existing = await doctorsCollection.findOne({ slug: data.slug });
+        if (existing) {
+          return res.status(409).send({
+            success: false,
+            message: "A doctor with this slug already exists. Please choose a different one.",
+          });
+        }
+
+        // Determine next order value (new doctor goes to the end)
+        const lastDoctor = await doctorsCollection
+          .find()
+          .sort({ order: -1 })
+          .limit(1)
+          .toArray();
+        const nextOrder = lastDoctor.length > 0 ? (lastDoctor[0].order || 0) + 1 : 1;
+
+        const doctor = {
+          name:            data.name.trim(),
+          slug:            data.slug.trim().toLowerCase(),
+          title:           data.title.trim(),
+          degrees:         Array.isArray(data.degrees) ? data.degrees : [],
+          photo:           data.photo?.trim() || "",
+          specializations: Array.isArray(data.specializations) ? data.specializations : [],
+          bio:             data.bio?.trim() || "",
+          quote:           data.quote?.trim() || "",
+          achievements:    Array.isArray(data.achievements) ? data.achievements : [],
+          branchSlugs:     Array.isArray(data.branchSlugs) ? data.branchSlugs : [],
+          isFeatured:      data.isFeatured !== undefined ? data.isFeatured : false,
+          isActive:        data.isActive !== undefined ? data.isActive : true,
+          order:           nextOrder,
+          createdAt:       new Date(),
+          updatedAt:       new Date(),
+        };
+
+        const result = await doctorsCollection.insertOne(doctor);
+
+        res.send({
+          success: true,
+          message: "Doctor added successfully",
+          insertedId: result.insertedId,
+        });
+      } catch (error) {
+        console.error("POST /doctors:", error);
+        res.status(500).send({ success: false, message: "Failed to add doctor" });
+      }
+    });
+
+    // PATCH — update doctor (any field, including isActive/isFeatured toggle) — admin only
+    app.patch("/doctors/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const update = req.body;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid doctor ID format" });
+        }
+
+        delete update._id;
+
+        // If slug is being changed, make sure it's still unique
+        if (update.slug) {
+          update.slug = update.slug.trim().toLowerCase();
+          const existing = await doctorsCollection.findOne({
+            slug: update.slug,
+            _id: { $ne: new ObjectId(id) },
+          });
+          if (existing) {
+            return res.status(409).send({
+              success: false,
+              message: "Another doctor already uses this slug",
+            });
+          }
+        }
+
+        update.updatedAt = new Date();
+
+        const result = await doctorsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: update }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ success: false, message: "Doctor not found" });
+        }
+
+        res.send({
+          success: true,
+          message: "Doctor updated successfully",
+          modifiedCount: result.modifiedCount,
+        });
+      } catch (error) {
+        console.error("PATCH /doctors/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to update doctor" });
+      }
+    });
+
+    // PATCH — reorder doctors — admin only
+    // body: { orders: [{ id: "...", order: 1 }, { id: "...", order: 2 }] }
+    app.patch("/doctors/reorder", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const { orders } = req.body;
+        if (!Array.isArray(orders)) {
+          return res.status(400).send({ success: false, message: "orders array is required" });
+        }
+
+        const bulkOps = orders.map(({ id, order }) => ({
+          updateOne: {
+            filter: { _id: new ObjectId(id) },
+            update: { $set: { order, updatedAt: new Date() } },
+          },
+        }));
+
+        await doctorsCollection.bulkWrite(bulkOps);
+
+        res.send({ success: true, message: "Doctor order updated" });
+      } catch (error) {
+        console.error("PATCH /doctors/reorder:", error);
+        res.status(500).send({ success: false, message: "Failed to reorder doctors" });
+      }
+    });
+
+    // DELETE — admin only
+    app.delete("/doctors/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid doctor ID format" });
+        }
+
+        const result = await doctorsCollection.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ success: false, message: "Doctor not found" });
+        }
+
+        res.send({ success: true, message: "Doctor deleted successfully" });
+      } catch (error) {
+        console.error("DELETE /doctors/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to delete doctor" });
+      }
+    });
+
 
 
 
