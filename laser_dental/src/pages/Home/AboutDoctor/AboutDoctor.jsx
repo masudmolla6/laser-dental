@@ -4,9 +4,12 @@ import {
   MapPin, Clock, Phone, Star, ArrowRight, CheckCircle2,
   MessageCircle, GraduationCap, Award, Heart, Zap,
   ChevronRight, Users, Calendar, TrendingUp, Building2,
-  Stethoscope, Sparkles, Shield, BadgeCheck
+  Stethoscope, Sparkles, Shield, BadgeCheck, UserRound,
 } from "lucide-react";
 import AboutDoctorSkeleton from "./AboutDoctorSkeleton";
+import { getIcon } from "../../../utils/iconMap";
+import useFeaturedDoctors from "../../../hooks/useFeaturedDoctors";
+import useBranches from "../../../hooks/useBranches";
 
 // ── Animated Counter ────────────────────────────────────────────────────────
 const Counter = ({ target, suffix = "", duration = 1800 }) => {
@@ -36,81 +39,44 @@ const Counter = ({ target, suffix = "", duration = 1800 }) => {
   return <span ref={ref}>{count}{suffix}</span>;
 };
 
-// ── Data ────────────────────────────────────────────────────────────────────
-const DOCTOR = {
-  name: "Dr. Fatema Khanam",
-  title: "Chief Dental Surgeon & Laser Specialist",
-  degrees: [
-    "BDS — Dhaka Dental College & Hospital",
-    "FCPS (Oral & Maxillofacial Surgery)",
-    "Laser Dentistry Certified — AALZ Germany",
-  ],
-  photo: "https://images.pexels.com/photos/32115957/pexels-photo-32115957.jpeg",
-  specializations: [
-    { icon: Zap,           label: "Laser Dentistry",    color: "#0ea5e9", bg: "#e0f2fe" },
-    { icon: Sparkles,      label: "Cosmetic Dentistry", color: "#ec4899", bg: "#fce7f3" },
-    { icon: Shield,        label: "Dental Implants",    color: "#8b5cf6", bg: "#ede9fe" },
-    { icon: GraduationCap, label: "Orthodontics",       color: "#10b981", bg: "#d1fae5" },
-    { icon: Heart,         label: "Preventive Care",    color: "#f59e0b", bg: "#fef3c7" },
-    { icon: Stethoscope,   label: "Oral Surgery",       color: "#ef4444", bg: "#fee2e2" },
-  ],
-  bio: "With over 15 years of experience, Dr. Fatema has transformed thousands of smiles across Dhaka. Trained in laser dentistry from Germany and holding an FCPS in oral surgery, she combines cutting-edge technology with a deeply compassionate approach — ensuring every patient feels comfortable, heard, and cared for from the first consultation to the final result.",
-  quote: "Every smile I restore reminds me why I chose this profession. Your comfort and confidence are my priority — always.",
-  achievements: [
-    { icon: Users,      text: "1,200+ successful treatments" },
-    { icon: Zap,        text: "Laser dentistry pioneer in Dhaka" },
-    { icon: BadgeCheck, text: "AALZ Germany certified" },
-    { icon: Award,      text: "Featured in national health journals" },
-    { icon: Calendar,   text: "15+ years of expertise" },
-    { icon: Building2,  text: "Dual-location practice" },
-  ],
-};
-
-const LOCATIONS = [
-  {
-    id: 1,
-    branch: "Branch 01",
-    area: "Mirpur, Dhaka",
-    address: "House 12, Road 7, Block C, Mirpur-10, Dhaka — 1216",
-    phone: "01745565435",
-    schedule: [
-      { days: "Sat – Thu (Morning)", time: "10:00 AM – 2:00 PM" },
-      { days: "Sat – Thu (Evening)", time: "5:00 PM – 9:00 PM" },
-      { days: "Friday",              time: "Closed" },
-    ],
-    mapLink: "https://maps.google.com",
-    color: "#0ea5e9",
-  },
-  {
-    id: 2,
-    branch: "Branch 02",
-    area: "Uttara, Dhaka",
-    address: "House 45, Road 3, Sector 7, Uttara, Dhaka — 1230",
-    phone: "01745565435",
-    schedule: [
-      { days: "Sat – Thu", time: "3:00 PM – 9:00 PM" },
-      { days: "Friday",    time: "Closed" },
-    ],
-    mapLink: "https://maps.google.com",
-    color: "#7c3aed",
-  },
-];
-
 // ── Main Component ──────────────────────────────────────────────────────────
 const AboutDoctor = () => {
   const [visible, setVisible] = useState(false);
+  const [featuredDoctors, doctorsLoading] = useFeaturedDoctors();
+  const [branches, branchesLoading] = useBranches();
+
+  // একাধিক featured doctor থাকলেও Home page এ প্রথম জনকে hero হিসেবে দেখাই
+  const DOCTOR = featuredDoctors?.[0];
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 60);
     return () => clearTimeout(t);
   }, []);
 
-
   const fadeUp = (delay = 0) => ({
     opacity: visible ? 1 : 0,
     transform: visible ? "translateY(0)" : "translateY(28px)",
     transition: `opacity 0.75s cubic-bezier(.22,1,.36,1) ${delay}ms, transform 0.75s cubic-bezier(.22,1,.36,1) ${delay}ms`,
   });
+
+  // ── Loading state ──
+  if (doctorsLoading || branchesLoading) {
+    return <AboutDoctorSkeleton />;
+  }
+
+  // ── No featured doctor set yet ──
+  if (!DOCTOR) {
+    return (
+      <div className="min-h-[40vh] flex flex-col items-center justify-center text-center px-5 py-20 bg-[#f7f9fc]">
+        <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4">
+          <UserRound size={24} />
+        </div>
+        <p className="text-slate-400 text-sm">
+          No featured doctor has been set up yet.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
@@ -305,7 +271,7 @@ const AboutDoctor = () => {
                   style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.14)" }}
                 >
                   <p className="font-display text-4xl font-bold text-gray-900" style={{ letterSpacing: "-0.04em" }}>
-                    <Counter target={15} suffix="+" />
+                    <Counter target={DOCTOR.yearsExperience || 10} suffix="+" />
                   </p>
                   <p className="text-[11px] text-gray-500 font-semibold mt-1 leading-tight uppercase tracking-wider">
                     Years of<br />Experience
@@ -332,7 +298,7 @@ const AboutDoctor = () => {
                   style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}
                 >
                   <p className="font-display text-3xl font-bold text-gray-900" style={{ letterSpacing: "-0.04em" }}>
-                    <Counter target={1200} suffix="+" />
+                    <Counter target={DOCTOR.patientsCount || 500} suffix="+" />
                   </p>
                   <p className="text-[11px] text-gray-500 font-semibold mt-1 uppercase tracking-wider">Patients</p>
                 </div>
@@ -360,21 +326,25 @@ const AboutDoctor = () => {
               </div>
 
               {/* Degrees */}
-              <div className="flex flex-col gap-2.5">
-                {DOCTOR.degrees.map((deg, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-sky-500/20 text-sky-300">
-                      <CheckCircle2 size={11} strokeWidth={2.5} />
+              {DOCTOR.degrees?.length > 0 && (
+                <div className="flex flex-col gap-2.5">
+                  {DOCTOR.degrees.map((deg, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-sky-500/20 text-sky-300">
+                        <CheckCircle2 size={11} strokeWidth={2.5} />
+                      </div>
+                      <span className="text-sm text-white/75 leading-relaxed">{deg}</span>
                     </div>
-                    <span className="text-sm text-white/75 leading-relaxed">{deg}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Bio */}
-              <p className="text-sm text-white/50 leading-relaxed pl-4 border-l-2 border-sky-500/35">
-                {DOCTOR.bio}
-              </p>
+              {DOCTOR.bio && (
+                <p className="text-sm text-white/50 leading-relaxed pl-4 border-l-2 border-sky-500/35">
+                  {DOCTOR.bio}
+                </p>
+              )}
 
               {/* CTAs */}
               <div className="flex flex-wrap gap-3 pt-1">
@@ -401,64 +371,73 @@ const AboutDoctor = () => {
       </section>
 
       {/* ── SPECIALIZATIONS ──────────────────────────────────────────────── */}
-      <section className="py-24 px-5 md:px-10 bg-white">
-        <div className="max-w-6xl mx-auto">
+      {(DOCTOR.specializations?.length > 0 || DOCTOR.achievements?.length > 0) && (
+        <section className="py-24 px-5 md:px-10 bg-white">
+          <div className="max-w-6xl mx-auto">
 
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-8 h-px bg-sky-400" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-500">Expertise</span>
-              <div className="w-8 h-px bg-sky-400" />
-            </div>
-            <h2 className="font-display font-bold text-gray-900 text-[clamp(1.8rem,4vw,2.8rem)]">
-              Areas of <span className="shimmer">Specialization</span>
-            </h2>
-            <p className="text-gray-400 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
-              Comprehensive dental care powered by the latest technology and genuine compassion.
-            </p>
-          </div>
-
-          {/* Spec grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-            {DOCTOR.specializations.map((spec) => {
-              const Icon = spec.icon;
-              return (
-                <div
-                  key={spec.label}
-                  className="spec-card rounded-2xl p-5 flex flex-col items-center text-center gap-3 cursor-default"
-                  style={{
-                    background: spec.bg,
-                    border: `1.5px solid ${spec.color}22`,
-                  }}
-                >
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center"
-                    style={{ background: `${spec.color}1a`, color: spec.color }}
-                  >
-                    <Icon size={20} strokeWidth={1.75} />
-                  </div>
-                  <p className="text-xs font-semibold text-gray-700 leading-tight">{spec.label}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Achievements grid */}
-          <div className="mt-10 grid grid-cols-2 md:grid-cols-3 gap-3.5">
-            {DOCTOR.achievements.map(({ icon: Icon, text }, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 rounded-xl px-5 py-4 card-rise cursor-default bg-slate-50 border border-slate-200 shadow-sm"
-              >
-                <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 bg-sky-500/10 text-sky-600">
-                  <Icon size={14} strokeWidth={2} />
-                </div>
-                <span className="text-sm text-gray-700 font-medium leading-tight">{text}</span>
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <div className="w-8 h-px bg-sky-400" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-500">Expertise</span>
+                <div className="w-8 h-px bg-sky-400" />
               </div>
-            ))}
+              <h2 className="font-display font-bold text-gray-900 text-[clamp(1.8rem,4vw,2.8rem)]">
+                Areas of <span className="shimmer">Specialization</span>
+              </h2>
+              <p className="text-gray-400 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
+                Comprehensive dental care powered by the latest technology and genuine compassion.
+              </p>
+            </div>
+
+            {/* Spec grid */}
+            {DOCTOR.specializations?.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                {DOCTOR.specializations.map((spec) => {
+                  const Icon = getIcon(spec.iconKey);
+                  return (
+                    <div
+                      key={spec.label}
+                      className="spec-card rounded-2xl p-5 flex flex-col items-center text-center gap-3 cursor-default"
+                      style={{
+                        background: spec.bg,
+                        border: `1.5px solid ${spec.color}22`,
+                      }}
+                    >
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center"
+                        style={{ background: `${spec.color}1a`, color: spec.color }}
+                      >
+                        <Icon size={20} strokeWidth={1.75} />
+                      </div>
+                      <p className="text-xs font-semibold text-gray-700 leading-tight">{spec.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Achievements grid */}
+            {DOCTOR.achievements?.length > 0 && (
+              <div className="mt-10 grid grid-cols-2 md:grid-cols-3 gap-3.5">
+                {DOCTOR.achievements.map((item, i) => {
+                  const Icon = getIcon(item.iconKey);
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 rounded-xl px-5 py-4 card-rise cursor-default bg-slate-50 border border-slate-200 shadow-sm"
+                    >
+                      <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 bg-sky-500/10 text-sky-600">
+                        <Icon size={14} strokeWidth={2} />
+                      </div>
+                      <span className="text-sm text-gray-700 font-medium leading-tight">{item.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── STATS + STORY ────────────────────────────────────────────────── */}
       <section className="py-24 px-5 md:px-10 bg-[#f7f9fc]">
@@ -468,10 +447,10 @@ const AboutDoctor = () => {
             {/* Stats 2x2 */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { target: 1200, suffix: "+", label: "Patients Treated", sub: "Across Dhaka",       icon: Users,      color: "#0ea5e9" },
-                { target: 15,   suffix: "+", label: "Years Experience",  sub: "Since 2010",          icon: Calendar,   color: "#7c3aed" },
+                { target: DOCTOR.patientsCount || 500, suffix: "+", label: "Patients Treated", sub: "Across Dhaka",       icon: Users,      color: "#0ea5e9" },
+                { target: DOCTOR.yearsExperience || 10, suffix: "+", label: "Years Experience",  sub: "Trusted care",       icon: Calendar,   color: "#7c3aed" },
                 { target: 98,   suffix: "%", label: "Success Rate",      sub: "Clinically verified", icon: TrendingUp, color: "#10b981" },
-                { target: 2,    suffix: "",  label: "Locations",         sub: "Both in Dhaka",       icon: Building2,  color: "#ec4899" },
+                { target: branches?.length || 1, suffix: "",  label: "Locations",  sub: "Across Dhaka",  icon: Building2,  color: "#ec4899" },
               ].map(({ target, suffix, label, sub, icon: Icon, color }) => (
                 <div
                   key={label}
@@ -507,181 +486,193 @@ const AboutDoctor = () => {
                 The clinic was built around one doctor's vision — that dental care shouldn't be feared. Every detail, from the calm interiors to the laser-assisted painless procedures, was designed to make patients feel at ease.
               </p>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Believing that a healthy smile is a gateway to confidence, the clinic now operates across two Dhaka locations — served by one dedicated doctor who ensures consistent, personal care at every visit.
+                Believing that a healthy smile is a gateway to confidence, the clinic now operates across Dhaka — served by doctors who ensure consistent, personal care at every visit.
               </p>
 
               {/* Quote card */}
-              <div className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-sky-100 to-violet-100 border-l-4 border-sky-600">
-                <div className="absolute top-3 right-4 font-display text-8xl font-bold leading-none select-none pointer-events-none text-sky-600/10">
-                  "
-                </div>
-                <p className="text-sm text-gray-700 italic leading-relaxed relative z-10">
-                  "{DOCTOR.quote}"
-                </p>
-                <div className="flex items-center gap-2.5 mt-4">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-sky-600 to-violet-600">
-                    {DOCTOR.name.split(" ")[1]?.[0] || "D"}
+              {DOCTOR.quote && (
+                <div className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-sky-100 to-violet-100 border-l-4 border-sky-600">
+                  <div className="absolute top-3 right-4 font-display text-8xl font-bold leading-none select-none pointer-events-none text-sky-600/10">
+                    "
                   </div>
-                  <p className="text-xs text-sky-700 font-bold">— {DOCTOR.name}</p>
+                  <p className="text-sm text-gray-700 italic leading-relaxed relative z-10">
+                    "{DOCTOR.quote}"
+                  </p>
+                  <div className="flex items-center gap-2.5 mt-4">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-sky-600 to-violet-600">
+                      {DOCTOR.name.split(" ")[1]?.[0] || "D"}
+                    </div>
+                    <p className="text-xs text-sky-700 font-bold">— {DOCTOR.name}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── TWO LOCATIONS ────────────────────────────────────────────────── */}
-      <section className="py-24 px-5 md:px-10 bg-white">
-        <div className="max-w-6xl mx-auto">
+      {/* ── LOCATIONS (dynamic — only branches this doctor is assigned to) ── */}
+      {DOCTOR.branchSlugs?.length > 0 && (
+        <section className="py-24 px-5 md:px-10 bg-white">
+          <div className="max-w-6xl mx-auto">
 
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-8 h-px bg-sky-400" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-500">Find Us</span>
-              <div className="w-8 h-px bg-sky-400" />
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <div className="w-8 h-px bg-sky-400" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-500">Find Us</span>
+                <div className="w-8 h-px bg-sky-400" />
+              </div>
+              <h2 className="font-display font-bold text-gray-900 text-[clamp(1.8rem,4vw,2.8rem)]">
+                Where to <span className="shimmer">Find {DOCTOR.name.split(" ")[1] || "Us"}</span>
+              </h2>
+              <p className="text-gray-400 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
+                Visit at any of the locations below — same trusted care at every branch.
+              </p>
             </div>
-            <h2 className="font-display font-bold text-gray-900 text-[clamp(1.8rem,4vw,2.8rem)]">
-              Our <span className="shimmer">Two Locations</span>
-            </h2>
-            <p className="text-gray-400 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
-              One doctor, two clinics — both in Dhaka, both delivering the same premium care.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {LOCATIONS.map((loc) => (
-              <div
-                key={loc.id}
-                className="loc-card rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-md"
-              >
-                {/* Card header */}
-                <div
-                  className="px-7 py-6 flex items-start justify-between"
-                  style={{
-                    background: `linear-gradient(135deg, ${loc.color}0f, ${loc.color}06)`,
-                    borderBottom: `1px solid ${loc.color}1c`,
-                  }}
-                >
-                  <div>
-                    <span
-                      className="text-[11px] font-bold uppercase tracking-[0.18em] px-3 py-1 rounded-full"
-                      style={{ background: `${loc.color}18`, color: loc.color }}
-                    >
-                      {loc.branch}
-                    </span>
-                    <h3 className="font-display font-bold text-gray-900 mt-2.5 leading-tight text-[1.3rem]">
-                      Laser Dental Point
-                    </h3>
-                    <p className="text-sm font-semibold mt-1" style={{ color: loc.color }}>
-                      {loc.area}
-                    </p>
-                  </div>
-                  {/* ✅ Fixed: removed duplicate w-13 h-13 */}
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ml-4"
-                    style={{ background: `${loc.color}18`, color: loc.color }}
-                  >
-                    <MapPin size={20} strokeWidth={1.75} />
-                  </div>
-                </div>
-
-                {/* Card body */}
-                <div className="px-7 py-6 flex flex-col gap-5">
-
-                  {/* Address */}
-                  <div className="flex items-start gap-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {(branches || [])
+                .filter((b) => DOCTOR.branchSlugs.includes(b.slug))
+                .map((loc) => {
+                  const accent = "#0ea5e9";
+                  return (
                     <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `${loc.color}12`, color: loc.color }}
+                      key={loc._id || loc.slug}
+                      className="loc-card rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-md"
                     >
-                      <MapPin size={15} strokeWidth={1.75} />
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-gray-400 font-semibold mb-0.5 uppercase tracking-wide">Address</p>
-                      <p className="text-sm text-gray-700 font-medium leading-relaxed">{loc.address}</p>
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div className="flex items-start gap-3.5">
-                    <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${loc.color}12`, color: loc.color }}
-                    >
-                      <Phone size={15} strokeWidth={1.75} />
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-gray-400 font-semibold mb-0.5 uppercase tracking-wide">Phone</p>
-                      <a
-                        href={`tel:${loc.phone}`}
-                        className="text-sm font-bold hover:underline"
-                        style={{ color: loc.color }}
+                      {/* Card header */}
+                      <div
+                        className="px-7 py-6 flex items-start justify-between"
+                        style={{
+                          background: `linear-gradient(135deg, ${accent}0f, ${accent}06)`,
+                          borderBottom: `1px solid ${accent}1c`,
+                        }}
                       >
-                        {loc.phone}
-                      </a>
-                    </div>
-                  </div>
+                        <div>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-[0.18em] px-3 py-1 rounded-full"
+                            style={{ background: `${accent}18`, color: accent }}
+                          >
+                            {loc.name}
+                          </span>
+                          <h3 className="font-display font-bold text-gray-900 mt-2.5 leading-tight text-[1.3rem]">
+                            Laser Dental Point
+                          </h3>
+                          <p className="text-sm font-semibold mt-1" style={{ color: accent }}>
+                            {loc.area}
+                          </p>
+                        </div>
+                        <div
+                          className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ml-4"
+                          style={{ background: `${accent}18`, color: accent }}
+                        >
+                          <MapPin size={20} strokeWidth={1.75} />
+                        </div>
+                      </div>
 
-                  {/* Schedule */}
-                  <div className="flex items-start gap-3.5">
-                    <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `${loc.color}12`, color: loc.color }}
-                    >
-                      <Clock size={15} strokeWidth={1.75} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[11px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Schedule</p>
-                      <div className="flex flex-col gap-2">
-                        {loc.schedule.map((s, i) => (
-                          <div key={i} className="flex items-center justify-between gap-2">
-                            <span className="text-xs text-gray-600 leading-tight">{s.days}</span>
-                            <span
-                              className="text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-                              style={{
-                                background: s.time === "Closed" ? "#fee2e2" : `${loc.color}15`,
-                                color:      s.time === "Closed" ? "#dc2626" : loc.color,
-                              }}
+                      {/* Card body */}
+                      <div className="px-7 py-6 flex flex-col gap-5">
+
+                        {/* Address */}
+                        {loc.address && (
+                          <div className="flex items-start gap-3.5">
+                            <div
+                              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                              style={{ background: `${accent}12`, color: accent }}
                             >
-                              {s.time}
-                            </span>
+                              <MapPin size={15} strokeWidth={1.75} />
+                            </div>
+                            <div>
+                              <p className="text-[11px] text-gray-400 font-semibold mb-0.5 uppercase tracking-wide">Address</p>
+                              <p className="text-sm text-gray-700 font-medium leading-relaxed">{loc.address}</p>
+                            </div>
                           </div>
-                        ))}
+                        )}
+
+                        {/* Phone */}
+                        {loc.phone && (
+                          <div className="flex items-start gap-3.5">
+                            <div
+                              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                              style={{ background: `${accent}12`, color: accent }}
+                            >
+                              <Phone size={15} strokeWidth={1.75} />
+                            </div>
+                            <div>
+                              <p className="text-[11px] text-gray-400 font-semibold mb-0.5 uppercase tracking-wide">Phone</p>
+                              <a
+                                href={`tel:${loc.phone}`}
+                                className="text-sm font-bold hover:underline"
+                                style={{ color: accent }}
+                              >
+                                {loc.phone}
+                              </a>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Schedule */}
+                        {loc.hours?.length > 0 && (
+                          <div className="flex items-start gap-3.5">
+                            <div
+                              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                              style={{ background: `${accent}12`, color: accent }}
+                            >
+                              <Clock size={15} strokeWidth={1.75} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[11px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Schedule</p>
+                              <div className="flex flex-col gap-2">
+                                {loc.hours.map((s, i) => (
+                                  <div key={i} className="flex items-center justify-between gap-2">
+                                    <span className="text-xs text-gray-600 leading-tight">{s.label}</span>
+                                    <span
+                                      className="text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+                                      style={{ background: `${accent}15`, color: accent }}
+                                    >
+                                      {s.morning || s.evening || "—"}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex gap-2.5 pt-3 border-t border-gray-100">
+                          {loc.mapLink && (
+                            <a
+                              href={loc.mapLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white transition-all active:scale-95 hover:opacity-90"
+                              style={{ background: accent, boxShadow: `0 4px 18px ${accent}40` }}
+                            >
+                              <MapPin size={14} strokeWidth={2} />
+                              Get Directions
+                            </a>
+                          )}
+                          {loc.whatsapp && (
+                            <a
+                              href={`https://wa.me/${loc.whatsapp}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-emerald-600 transition-all active:scale-95 hover:bg-emerald-100 bg-emerald-50 border border-emerald-200"
+                            >
+                              <MessageCircle size={14} strokeWidth={2} />
+                              WhatsApp
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2.5 pt-3 border-t border-gray-100">
-                    <a
-                      href={loc.mapLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white transition-all active:scale-95 hover:opacity-90"
-                      style={{
-                        background: loc.color,
-                        boxShadow: `0 4px 18px ${loc.color}40`,
-                      }}
-                    >
-                      <MapPin size={14} strokeWidth={2} />
-                      Get Directions
-                    </a>
-                    <a
-                      href={`https://wa.me/880${loc.phone.replace(/^0/, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-emerald-600 transition-all active:scale-95 hover:bg-emerald-100 bg-emerald-50 border border-emerald-200"
-                    >
-                      <MessageCircle size={14} strokeWidth={2} />
-                      WhatsApp
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
+                  );
+                })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
       <section className="py-16 px-5 md:px-10 bg-[#f7f9fc]">
@@ -724,7 +715,7 @@ const AboutDoctor = () => {
                 Your perfect smile is<br />one appointment away.
               </h2>
               <p className="text-white/45 text-sm mb-10 max-w-md mx-auto leading-relaxed">
-                Book a consultation with {DOCTOR.name} at either of our Dhaka locations — we'll take care of the rest.
+                Book a consultation with {DOCTOR.name} — we'll take care of the rest.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link

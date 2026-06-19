@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import {
   UserRound, GraduationCap, Image as ImageIcon, Quote, FileText,
   Plus, Trash2, ArrowLeft, Save, Loader2, ToggleLeft, ToggleRight,
-  Star, MapPin, Sparkles, Award, X,
+  Star, MapPin, Sparkles, Award, X, Users,
 } from "lucide-react";
 import { iconMap, iconOptions, getIcon } from "../../../utils/iconMap";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
@@ -192,6 +192,8 @@ const DoctorForm = () => {
       specializations: [{ iconKey: "stethoscope", label: "", color: SPEC_COLORS[0].color, bg: SPEC_COLORS[0].bg }],
       achievements: [{ iconKey: "award", text: "" }],
       branchSlugs: [],
+      yearsExperience: "",
+      patientsCount: "",
       isFeatured: false,
       isActive: true,
     },
@@ -234,6 +236,8 @@ const DoctorForm = () => {
           ? existingDoctor.achievements
           : [{ iconKey: "award", text: "" }],
         branchSlugs: existingDoctor.branchSlugs || [],
+        yearsExperience: existingDoctor.yearsExperience ?? "",
+        patientsCount: existingDoctor.patientsCount ?? "",
         isFeatured: existingDoctor.isFeatured ?? false,
         isActive: existingDoctor.isActive ?? true,
       });
@@ -268,6 +272,8 @@ const DoctorForm = () => {
       ...data,
       specializations: data.specializations.filter((s) => s.label?.trim()),
       achievements: data.achievements.filter((a) => a.text?.trim()),
+      yearsExperience: Number.isFinite(data.yearsExperience) ? data.yearsExperience : 0,
+      patientsCount: Number.isFinite(data.patientsCount) ? data.patientsCount : 0,
     };
 
     try {
@@ -421,6 +427,36 @@ const DoctorForm = () => {
                 placeholder="e.g. Chief Dental Surgeon & Laser Specialist"
               />
             </Field>
+
+            {/* Years of experience + Patients treated */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Field label="Years of Experience" icon={Award} error={errors.yearsExperience?.message}>
+                <input
+                  {...register("yearsExperience", {
+                    min: { value: 0, message: "Must be a positive number" },
+                    valueAsNumber: true,
+                  })}
+                  className={inputCls(!!errors.yearsExperience)}
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 15"
+                />
+                <p className="text-[10px] text-slate-400">Shown as "15+ Years of Experience" on the website</p>
+              </Field>
+              <Field label="Patients Treated" icon={Users} error={errors.patientsCount?.message}>
+                <input
+                  {...register("patientsCount", {
+                    min: { value: 0, message: "Must be a positive number" },
+                    valueAsNumber: true,
+                  })}
+                  className={inputCls(!!errors.patientsCount)}
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 1200"
+                />
+                <p className="text-[10px] text-slate-400">Shown as "1,200+ Patients" on the website</p>
+              </Field>
+            </div>
 
             {/* Photo URL */}
             <Field label="Photo URL" icon={ImageIcon} error={errors.photo?.message}>
