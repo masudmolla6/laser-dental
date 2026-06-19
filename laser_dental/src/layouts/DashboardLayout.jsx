@@ -16,7 +16,8 @@ import {
   LayoutTemplate,
   Stethoscope,
   Settings,
-  Building2
+  Building2,
+  UserRound, 
 } from "lucide-react";
 import useAuth from "../hooks/useAuth";
 import { NavLink, Outlet } from "react-router-dom";
@@ -126,6 +127,25 @@ const adminGroups = [
         Icon: Building2,
         iconBg: "bg-cyan-500/20",
         iconColor: "text-cyan-400",
+      },
+    ],
+  },
+  {
+    label: "Doctors",
+    links: [
+      {
+        name: "Add Doctor",
+        path: "/dashboard/addDoctor",
+        Icon: ImagePlus,
+        iconBg: "bg-fuchsia-500/20",
+        iconColor: "text-fuchsia-400",
+      },
+      {
+        name: "Manage Doctors",
+        path: "/dashboard/manageDoctors",
+        Icon: UserRound,
+        iconBg: "bg-purple-500/20",
+        iconColor: "text-purple-400",
       },
     ],
   },

@@ -24,6 +24,8 @@ import ServiceDetails from "../pages/Services/ServiceDetails/ServiceDetails";
 import AppointmentPage from "../pages/Appointments/AppointmentPage";
 import ManageBranches from "../pages/Dashboard/ManageBranches/ManageBranches";
 import BranchForm from "../pages/Dashboard/ManageBranches/BranchForm";
+import ManageDoctors from "../pages/Dashboard/ManageDoctors/ManageDoctors";
+import DoctorForm from "../pages/Dashboard/ManageDoctors/DoctorForm";
 
 const router=createBrowserRouter([
     {
@@ -120,6 +122,18 @@ const router=createBrowserRouter([
             {
                 path:"editBranch/:id",
                 element:<BranchForm></BranchForm>
+            },
+            {
+                path: "manageDoctors",
+                element: <ManageDoctors></ManageDoctors>
+            },
+            {
+                path: "addDoctor",
+                element: <DoctorForm></DoctorForm>
+            },
+            {
+                path: "editDoctor/:id",
+                element: <DoctorForm></DoctorForm>
             },
             {
                 path: "adminProfile",
