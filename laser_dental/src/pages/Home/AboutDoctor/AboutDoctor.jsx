@@ -5,6 +5,7 @@ import {
   MessageCircle, GraduationCap, Award, Heart, Zap,
   ChevronRight, Users, Calendar, TrendingUp, Building2,
   Stethoscope, Sparkles, Shield, BadgeCheck, UserRound,
+  FileBadge, X,
 } from "lucide-react";
 import AboutDoctorSkeleton from "./AboutDoctorSkeleton";
 import { getIcon } from "../../../utils/iconMap";
@@ -39,11 +40,36 @@ const Counter = ({ target, suffix = "", duration = 1800 }) => {
   return <span ref={ref}>{count}{suffix}</span>;
 };
 
+// ── Certificate lightbox modal ───────────────────────────────────────────────
+const CertificateModal = ({ image, title, onClose }) => (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/75 backdrop-blur-sm"
+    onClick={onClose}
+  >
+    <div
+      className="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+      >
+        <X size={16} />
+      </button>
+      <img src={image} alt={title} className="w-full h-auto object-contain max-h-[80vh]" />
+      <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
+        <p className="text-sm font-semibold text-slate-700">{title}</p>
+      </div>
+    </div>
+  </div>
+);
+
 // ── Main Component ──────────────────────────────────────────────────────────
 const AboutDoctor = () => {
   const [visible, setVisible] = useState(false);
   const [featuredDoctors, doctorsLoading] = useFeaturedDoctors();
   const [branches, branchesLoading] = useBranches();
+  const [activeCertificate, setActiveCertificate] = useState(null);
 
   // একাধিক featured doctor থাকলেও Home page এ প্রথম জনকে hero হিসেবে দেখাই
   const DOCTOR = featuredDoctors?.[0];
@@ -77,6 +103,13 @@ const AboutDoctor = () => {
       </div>
     );
   }
+
+  // Normalize degrees — handles both the old plain-string format and the
+  // new { title, certificateImage } object format, so this never crashes
+  // regardless of which shape is stored in the database.
+  const normalizedDegrees = (DOCTOR.degrees || []).map((d) =>
+    typeof d === "string" ? { title: d, certificateImage: "" } : d
+  );
 
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
@@ -156,6 +189,14 @@ const AboutDoctor = () => {
           width: 60%; height: 100%;
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
           animation: shine 4s ease-in-out infinite;
+        }
+
+        .cert-thumb {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .cert-thumb:hover {
+          transform: translateY(-2px) scale(1.05);
+          box-shadow: 0 8px 20px rgba(14,165,233,0.35);
         }
       `}</style>
 
@@ -325,15 +366,34 @@ const AboutDoctor = () => {
                 <p className="text-sky-300 text-base font-medium">{DOCTOR.title}</p>
               </div>
 
-              {/* Degrees */}
-              {DOCTOR.degrees?.length > 0 && (
+              {/* Degrees — now object-aware, with optional certificate thumbnail */}
+              {normalizedDegrees.length > 0 && (
                 <div className="flex flex-col gap-2.5">
-                  {DOCTOR.degrees.map((deg, i) => (
+                  {normalizedDegrees.map((deg, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-sky-500/20 text-sky-300">
                         <CheckCircle2 size={11} strokeWidth={2.5} />
                       </div>
-                      <span className="text-sm text-white/75 leading-relaxed">{deg}</span>
+                      <span className="text-sm text-white/75 leading-relaxed flex-1">{deg.title}</span>
+                      {deg.certificateImage && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveCertificate({ image: deg.certificateImage, title: deg.title })
+                          }
+                          className="cert-thumb relative w-8 h-8 rounded-lg overflow-hidden border border-sky-400/40 flex-shrink-0"
+                          title="View certificate"
+                        >
+                          <img
+                            src={deg.certificateImage}
+                            alt={deg.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                            <FileBadge size={11} className="text-white" />
+                          </div>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -737,6 +797,15 @@ const AboutDoctor = () => {
           </div>
         </div>
       </section>
+
+      {/* ── Certificate lightbox ── */}
+      {activeCertificate && (
+        <CertificateModal
+          image={activeCertificate.image}
+          title={activeCertificate.title}
+          onClose={() => setActiveCertificate(null)}
+        />
+      )}
     </div>
   );
 };

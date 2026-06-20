@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Loader2,
   GraduationCap,
+  FileBadge,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -74,6 +75,12 @@ const DoctorCard = ({ doctor, branchMap, onToggleActive, onDeleteClick, toggling
 
   const isToggling = togglingId === doctor._id;
 
+  // Count how many degrees actually have a certificate image uploaded
+  const totalDegrees = doctor.degrees?.length || 0;
+  const certifiedDegrees = (doctor.degrees || []).filter(
+    (d) => d?.certificateImage?.trim()
+  ).length;
+
   return (
     <div
       className={`group relative rounded-3xl overflow-hidden bg-white border transition-all duration-300 hover:shadow-xl hover:-translate-y-1
@@ -122,11 +129,26 @@ const DoctorCard = ({ doctor, branchMap, onToggleActive, onDeleteClick, toggling
         </div>
         <p className="text-xs font-semibold text-sky-600 mb-3">{doctor.title}</p>
 
-        {/* Degrees count */}
-        {doctor.degrees?.length > 0 && (
-          <div className="flex items-center gap-1.5 mb-3 text-[11px] text-slate-500">
-            <GraduationCap size={12} className="text-slate-400" />
-            <span>{doctor.degrees.length} qualification{doctor.degrees.length > 1 ? "s" : ""}</span>
+        {/* Degrees count + certificate indicator */}
+        {totalDegrees > 0 && (
+          <div className="flex items-center gap-3 mb-3 text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5">
+              <GraduationCap size={12} className="text-slate-400" />
+              <span>{totalDegrees} qualification{totalDegrees > 1 ? "s" : ""}</span>
+            </div>
+            <div
+              className={`flex items-center gap-1.5 ${
+                certifiedDegrees === totalDegrees
+                  ? "text-emerald-600"
+                  : certifiedDegrees > 0
+                  ? "text-amber-600"
+                  : "text-slate-400"
+              }`}
+              title={`${certifiedDegrees} of ${totalDegrees} have a certificate photo uploaded`}
+            >
+              <FileBadge size={12} />
+              <span>{certifiedDegrees}/{totalDegrees} certified</span>
+            </div>
           </div>
         )}
 
@@ -410,4 +432,3 @@ const ManageDoctors = () => {
 };
 
 export default ManageDoctors;
-

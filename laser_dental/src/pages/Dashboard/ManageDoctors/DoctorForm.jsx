@@ -2,16 +2,32 @@
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import Swal from "sweetalert2";
 import {
   UserRound, GraduationCap, Image as ImageIcon, Quote, FileText,
   Plus, Trash2, ArrowLeft, Save, Loader2, ToggleLeft, ToggleRight,
-  Star, MapPin, Sparkles, Award, X, Users,
+  Star, MapPin, Sparkles, Award, X, Users, ImagePlus, CheckCircle2,
+  Upload, FileBadge,
 } from "lucide-react";
 import { iconMap, iconOptions, getIcon } from "../../../utils/iconMap";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import useDoctorsSecure from "../../../hooks/useDoctorsSecure";
 import useBranchesSecure from "../../../hooks/useBranchesSecure";
+
+const IMG_BB_KEY = import.meta.env.VITE_image_host_key;
+
+// ── Upload helper — same logic as AddPicture.jsx ────────────────────────────
+const uploadToImgBB = async (file) => {
+  if (!file) return "";
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await axios.post(
+    `https://api.imgbb.com/1/upload?key=${IMG_BB_KEY}`,
+    formData
+  );
+  return res.data?.data?.display_url || "";
+};
 
 // ── Field wrapper — same as BranchForm ──────────────────────────────────────
 const Field = ({ label, icon: Icon, error, required, children }) => (
@@ -52,66 +68,110 @@ const SPEC_COLORS = [
   { color: "#ef4444", bg: "#fee2e2" },
 ];
 
-// ── Tag input (for degrees — free text chips, press Enter to add) ──────────
-const TagInput = ({ value = [], onChange, placeholder }) => {
-  const [draft, setDraft] = useState("");
-
-  const addTag = () => {
-    const trimmed = draft.trim();
-    if (trimmed && !value.includes(trimmed)) {
-      onChange([...value, trimmed]);
-    }
-    setDraft("");
-  };
-
-  const removeTag = (tag) => onChange(value.filter((t) => t !== tag));
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTag();
-    }
-  };
-
+// ── Photo uploader — large square box for the doctor's profile photo ───────
+const PhotoUploader = ({ value, uploading, onUpload }) => {
   return (
-    <div>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className={inputCls(false) + " flex-1"}
-          placeholder={placeholder}
-        />
-        <button
-          type="button"
-          onClick={addTag}
-          className="px-4 rounded-xl bg-sky-50 text-sky-600 font-bold text-xs hover:bg-sky-100 transition-colors flex items-center gap-1"
-        >
-          <Plus size={14} /> Add
-        </button>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <ImageIcon size={12} className="text-sky-500" />
+          Doctor Photo
+        </span>
+        {value && !uploading && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600 flex items-center gap-1">
+            <CheckCircle2 size={9} /> Uploaded
+          </span>
+        )}
       </div>
-      {value.length > 0 && (
-        <div className="flex flex-col gap-2 mt-2.5">
-          {value.map((tag, i) => (
-            <span
-              key={`${tag}-${i}`}
-              className="inline-flex items-center justify-between gap-1.5 text-xs font-medium pl-3 pr-1.5 py-2 rounded-xl bg-slate-100 text-slate-600"
-            >
-              <span className="leading-relaxed">{tag}</span>
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className="w-5 h-5 rounded-full hover:bg-slate-300 flex items-center justify-center transition-colors flex-shrink-0"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          ))}
+      <label
+        className={`relative flex flex-col items-center justify-center h-44 w-44 mx-auto sm:mx-0 rounded-2xl border-2 border-dashed cursor-pointer overflow-hidden transition-all duration-200 ${
+          value ? "border-sky-300" : "border-slate-200 hover:border-sky-300 hover:bg-sky-50/50"
+        } ${uploading ? "pointer-events-none opacity-70" : ""}`}
+      >
+        {value ? (
+          <>
+            <img src={value} className="absolute inset-0 w-full h-full object-cover object-top" alt="Doctor" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-white text-xs font-semibold bg-black/50 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                <Upload size={11} /> Change
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-sky-400">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-sky-50">
+              <ImagePlus size={22} />
+            </div>
+            <span className="text-xs font-medium text-slate-500 text-center px-2">Click to upload</span>
+            <span className="text-[10px] text-slate-300">PNG, JPG, WEBP</span>
+          </div>
+        )}
+        {uploading && (
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+            <Loader2 size={22} className="animate-spin text-sky-500" />
+          </div>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          disabled={uploading}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onUpload(file);
+          }}
+        />
+      </label>
+    </div>
+  );
+};
+
+// ── Certificate uploader — compact inline box used inside each degree row ──
+const CertificateUploader = ({ value, uploading, onUpload, onRemove }) => {
+  return (
+    <label
+      className={`relative flex flex-col items-center justify-center h-20 w-20 flex-shrink-0 rounded-xl border-2 border-dashed cursor-pointer overflow-hidden transition-all duration-200 ${
+        value ? "border-violet-300" : "border-slate-200 hover:border-violet-300 hover:bg-violet-50/50"
+      } ${uploading ? "pointer-events-none opacity-70" : ""}`}
+      title="Upload certificate image"
+    >
+      {value ? (
+        <>
+          <img src={value} className="absolute inset-0 w-full h-full object-cover" alt="Certificate" />
+          <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+            <span className="text-white text-[9px] font-semibold">Change</span>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 hover:bg-red-500 flex items-center justify-center transition-colors z-10"
+          >
+            <X size={9} className="text-white" />
+          </button>
+        </>
+      ) : (
+        <FileBadge size={18} className="text-violet-300" />
+      )}
+      {uploading && (
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+          <Loader2 size={14} className="animate-spin text-violet-500" />
         </div>
       )}
-    </div>
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        disabled={uploading}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onUpload(file);
+        }}
+      />
+    </label>
   );
 };
 
@@ -172,6 +232,10 @@ const DoctorForm = () => {
     ? allDoctors.find((d) => d._id === id)
     : null;
 
+  // Upload state — tracked outside react-hook-form since these are async side effects
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [degreeUploadingIndex, setDegreeUploadingIndex] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -188,7 +252,7 @@ const DoctorForm = () => {
       photo: "",
       bio: "",
       quote: "",
-      degrees: [],
+      degrees: [{ title: "", certificateImage: "" }],
       specializations: [{ iconKey: "stethoscope", label: "", color: SPEC_COLORS[0].color, bg: SPEC_COLORS[0].bg }],
       achievements: [{ iconKey: "award", text: "" }],
       branchSlugs: [],
@@ -198,6 +262,12 @@ const DoctorForm = () => {
       isActive: true,
     },
   });
+
+  const {
+    fields: degreeFields,
+    append: appendDegree,
+    remove: removeDegree,
+  } = useFieldArray({ control, name: "degrees" });
 
   const {
     fields: specFields,
@@ -228,7 +298,11 @@ const DoctorForm = () => {
         photo: existingDoctor.photo || "",
         bio: existingDoctor.bio || "",
         quote: existingDoctor.quote || "",
-        degrees: existingDoctor.degrees || [],
+        degrees: existingDoctor.degrees?.length
+          ? existingDoctor.degrees.map((d) =>
+              typeof d === "string" ? { title: d, certificateImage: "" } : d
+            )
+          : [{ title: "", certificateImage: "" }],
         specializations: existingDoctor.specializations?.length
           ? existingDoctor.specializations
           : [{ iconKey: "stethoscope", label: "", color: SPEC_COLORS[0].color, bg: SPEC_COLORS[0].bg }],
@@ -266,10 +340,53 @@ const DoctorForm = () => {
     }
   };
 
+  // ── Doctor photo upload ──
+  const handlePhotoUpload = async (file) => {
+    if (!IMG_BB_KEY) {
+      return Swal.fire({ icon: "error", title: "Upload key missing", text: "ImgBB API key is not configured." });
+    }
+    setPhotoUploading(true);
+    try {
+      const url = await uploadToImgBB(file);
+      if (url) {
+        setValue("photo", url);
+      } else {
+        Swal.fire({ icon: "error", title: "Upload failed", text: "Could not get an image URL from the host." });
+      }
+    } catch (err) {
+      console.error("Photo upload error:", err);
+      Swal.fire({ icon: "error", title: "Upload failed", text: "Something went wrong while uploading the photo." });
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  // ── Certificate image upload (per degree row) ──
+  const handleCertificateUpload = async (index, file) => {
+    if (!IMG_BB_KEY) {
+      return Swal.fire({ icon: "error", title: "Upload key missing", text: "ImgBB API key is not configured." });
+    }
+    setDegreeUploadingIndex(index);
+    try {
+      const url = await uploadToImgBB(file);
+      if (url) {
+        setValue(`degrees.${index}.certificateImage`, url);
+      } else {
+        Swal.fire({ icon: "error", title: "Upload failed", text: "Could not get an image URL from the host." });
+      }
+    } catch (err) {
+      console.error("Certificate upload error:", err);
+      Swal.fire({ icon: "error", title: "Upload failed", text: "Something went wrong while uploading the certificate." });
+    } finally {
+      setDegreeUploadingIndex(null);
+    }
+  };
+
   const onSubmit = async (data) => {
-    // Drop empty rows before saving (e.g. user left a spec/achievement blank)
+    // Drop empty rows before saving (e.g. user left a spec/achievement/degree blank)
     const payload = {
       ...data,
+      degrees: data.degrees.filter((d) => d.title?.trim()),
       specializations: data.specializations.filter((s) => s.label?.trim()),
       achievements: data.achievements.filter((a) => a.text?.trim()),
       yearsExperience: Number.isFinite(data.yearsExperience) ? data.yearsExperience : 0,
@@ -341,6 +458,9 @@ const DoctorForm = () => {
           className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden"
           noValidate
         >
+          {/* Top accent bar — matches AddPicture.jsx styling */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-sky-500 via-violet-500 to-emerald-500" />
+
           <div className="p-6 md:p-8 space-y-6">
 
             {/* Status toggles */}
@@ -387,6 +507,13 @@ const DoctorForm = () => {
                 </button>
               </div>
             </div>
+
+            {/* Photo upload — full width, prominent */}
+            <PhotoUploader
+              value={watchedPhoto}
+              uploading={photoUploading}
+              onUpload={handlePhotoUpload}
+            />
 
             {/* Name + Slug */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -458,17 +585,6 @@ const DoctorForm = () => {
               </Field>
             </div>
 
-            {/* Photo URL */}
-            <Field label="Photo URL" icon={ImageIcon} error={errors.photo?.message}>
-              <input
-                {...register("photo")}
-                className={inputCls(false)}
-                type="url"
-                placeholder="https://..."
-              />
-              <p className="text-[10px] text-slate-400">Leave blank to show a placeholder avatar</p>
-            </Field>
-
             {/* Branches — multi-select checkbox */}
             <div>
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
@@ -503,14 +619,53 @@ const DoctorForm = () => {
               )}
             </div>
 
-            {/* Degrees */}
-            <Field label="Degrees & Certifications" icon={GraduationCap}>
-              <TagInput
-                value={watch("degrees") || []}
-                onChange={(v) => setValue("degrees", v)}
-                placeholder="e.g. BDS — Dhaka Dental College — press Enter"
-              />
-            </Field>
+            {/* Degrees & Certifications — title + certificate image per row */}
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <GraduationCap size={12} className="text-sky-500" />
+                Degrees & Certifications
+              </label>
+              <div className="space-y-3">
+                {degreeFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="flex gap-3 items-start p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
+                    <CertificateUploader
+                      value={watch(`degrees.${index}.certificateImage`)}
+                      uploading={degreeUploadingIndex === index}
+                      onUpload={(file) => handleCertificateUpload(index, file)}
+                      onRemove={() => setValue(`degrees.${index}.certificateImage`, "")}
+                    />
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <input
+                        {...register(`degrees.${index}.title`)}
+                        className={inputCls(false)}
+                        placeholder="e.g. BDS — Dhaka Dental College & Hospital"
+                      />
+                      <p className="text-[10px] text-slate-400 pl-1">
+                        Upload a photo of the certificate on the left (optional)
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeDegree(index)}
+                      disabled={degreeFields.length === 1}
+                      className="w-11 h-11 flex-shrink-0 rounded-xl border border-red-100 text-red-400 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => appendDegree({ title: "", certificateImage: "" })}
+                className="mt-3 flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-700 transition-colors"
+              >
+                <Plus size={14} /> Add degree / certification
+              </button>
+            </div>
 
             {/* Bio */}
             <Field label="Biography" icon={FileText} error={errors.bio?.message}>
@@ -660,7 +815,7 @@ const DoctorForm = () => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || photoUploading || degreeUploadingIndex !== null}
               className="flex-1 py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-sky-600 to-sky-500 shadow-md shadow-sky-200 hover:brightness-105 transition-all disabled:opacity-60"
             >
               {isSubmitting ? (
