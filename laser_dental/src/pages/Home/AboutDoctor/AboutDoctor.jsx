@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   MapPin, Clock, Phone, Star, ArrowRight, CheckCircle2,
-  MessageCircle, GraduationCap, Award, Heart, Zap,
-  ChevronRight, Users, Calendar, TrendingUp, Building2,
-  Stethoscope, Sparkles, Shield, BadgeCheck, UserRound,
-  FileBadge, X,
+  MessageCircle, Award, Calendar, Users, TrendingUp, Building2,
+  Sparkles, BadgeCheck, UserRound, X, ShieldCheck, Quote as QuoteIcon,
+  ChevronRight, GraduationCap,
 } from "lucide-react";
 import AboutDoctorSkeleton from "./AboutDoctorSkeleton";
 import { getIcon } from "../../../utils/iconMap";
@@ -40,121 +39,214 @@ const Counter = ({ target, suffix = "", duration = 1800 }) => {
   return <span ref={ref}>{count}{suffix}</span>;
 };
 
-// ── Certificate lightbox modal ───────────────────────────────────────────────
-const CertificateModal = ({ image, title, onClose }) => (
-  <div
-    className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/75 backdrop-blur-sm"
-    onClick={onClose}
-  >
+// ── Reveal-on-scroll wrapper ─────────────────────────────────────────────────
+const Reveal = ({ children, delay = 0 }) => {
+  const [shown, setShown] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setShown(true), delay);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [delay]);
+  return (
     <div
-      className="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
+      ref={ref}
+      style={{
+        opacity: shown ? 1 : 0,
+        transform: shown ? "translateY(0)" : "translateY(24px)",
+        transition: "opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1)",
+      }}
     >
-      <button
-        onClick={onClose}
-        className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+      {children}
+    </div>
+  );
+};
+
+// ── Certificate lightbox modal ───────────────────────────────────────────────
+const CertificateGalleryModal = ({ certificates, startIndex, onClose }) => {
+  const [activeIndex, setActiveIndex] = useState(startIndex || 0);
+  const active = certificates[activeIndex];
+
+  const goPrev = () => setActiveIndex((i) => (i === 0 ? certificates.length - 1 : i - 1));
+  const goNext = () => setActiveIndex((i) => (i === certificates.length - 1 ? 0 : i + 1));
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-8 bg-black/85 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <div
+        className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
       >
-        <X size={16} />
-      </button>
-      <img src={image} alt={title} className="w-full h-auto object-contain max-h-[80vh]" />
-      <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
-        <p className="text-sm font-semibold text-slate-700">{title}</p>
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 flex items-center justify-center text-white transition-colors"
+        >
+          <X size={16} />
+        </button>
+
+        {/* Main image viewer */}
+        <div className="relative bg-slate-100 flex items-center justify-center" style={{ minHeight: "320px" }}>
+          <img
+            src={active.certificateImage}
+            alt={active.title}
+            className="w-full h-auto object-contain max-h-[55vh]"
+          />
+          {certificates.length > 1 && (
+            <>
+              <button
+                onClick={goPrev}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/45 hover:bg-black/65 flex items-center justify-center text-white transition-colors"
+              >
+                <ChevronRight size={18} className="rotate-180" />
+              </button>
+              <button
+                onClick={goNext}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/45 hover:bg-black/65 flex items-center justify-center text-white transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Active title bar */}
+        <div className="px-5 py-3 bg-slate-50 border-t border-b border-slate-100 flex items-center gap-2">
+          <ShieldCheck size={14} className="text-emerald-500 flex-shrink-0" />
+          <p className="text-sm font-semibold text-slate-700 flex-1">{active.title}</p>
+          {certificates.length > 1 && (
+            <span className="text-xs text-slate-400 font-medium flex-shrink-0">
+              {activeIndex + 1} / {certificates.length}
+            </span>
+          )}
+        </div>
+
+        {/* Thumbnail strip */}
+        {certificates.length > 1 && (
+          <div className="flex gap-2 p-3 overflow-x-auto scroll-hide bg-white">
+            {certificates.map((cert, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveIndex(i)}
+                className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                  i === activeIndex ? "border-sky-400" : "border-slate-200 opacity-60 hover:opacity-100"
+                }`}
+              >
+                <img src={cert.certificateImage} alt={cert.title} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── Main Component ──────────────────────────────────────────────────────────
 const AboutDoctor = () => {
-  const [visible, setVisible] = useState(false);
   const [featuredDoctors, doctorsLoading] = useFeaturedDoctors();
   const [branches, branchesLoading] = useBranches();
-  const [activeCertificate, setActiveCertificate] = useState(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryStartIndex, setGalleryStartIndex] = useState(0);
 
-  // একাধিক featured doctor থাকলেও Home page এ প্রথম জনকে hero হিসেবে দেখাই
   const DOCTOR = featuredDoctors?.[0];
 
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 60);
-    return () => clearTimeout(t);
-  }, []);
-
-  const fadeUp = (delay = 0) => ({
-    opacity: visible ? 1 : 0,
-    transform: visible ? "translateY(0)" : "translateY(28px)",
-    transition: `opacity 0.75s cubic-bezier(.22,1,.36,1) ${delay}ms, transform 0.75s cubic-bezier(.22,1,.36,1) ${delay}ms`,
-  });
-
-  // ── Loading state ──
   if (doctorsLoading || branchesLoading) {
     return <AboutDoctorSkeleton />;
   }
 
-  // ── No featured doctor set yet ──
   if (!DOCTOR) {
     return (
-      <div className="min-h-[40vh] flex flex-col items-center justify-center text-center px-5 py-20 bg-[#f7f9fc]">
-        <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4">
+      <div className="min-h-[40vh] flex flex-col items-center justify-center text-center px-5 py-20 bg-[#06101f]">
+        <div className="w-14 h-14 rounded-2xl bg-white/5 text-white/30 flex items-center justify-center mb-4">
           <UserRound size={24} />
         </div>
-        <p className="text-slate-400 text-sm">
-          No featured doctor has been set up yet.
-        </p>
+        <p className="text-white/30 text-sm">No featured doctor has been set up yet.</p>
       </div>
     );
   }
 
-  // Normalize degrees — handles both the old plain-string format and the
-  // new { title, certificateImage } object format, so this never crashes
-  // regardless of which shape is stored in the database.
   const normalizedDegrees = (DOCTOR.degrees || []).map((d) =>
     typeof d === "string" ? { title: d, certificateImage: "" } : d
   );
+  const certifiedCount = normalizedDegrees.filter((d) => d.certificateImage).length;
+  const certifiedDegrees = normalizedDegrees.filter((d) => d.certificateImage);
+  const myBranches = (branches || []).filter((b) => DOCTOR.branchSlugs?.includes(b.slug));
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc]">
+    <div style={{ background: "#06101f" }}>
       <style>{`
-        @keyframes floatY {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50%       { transform: translateY(-12px) rotate(1deg); }
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-14px); }
         }
-        .float { animation: floatY 6s ease-in-out infinite; }
+        .float-slow { animation: floatSlow 7s ease-in-out infinite; }
 
         @keyframes shimmer-text {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
         }
         .shimmer {
-          background: linear-gradient(90deg, #0ea5e9 0%, #7c3aed 40%, #ec4899 70%, #0ea5e9 100%);
+          background: linear-gradient(90deg, #38bdf8 0%, #a78bfa 40%, #f472b6 70%, #38bdf8 100%);
           background-size: 200% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          animation: shimmer-text 5s linear infinite;
+          animation: shimmer-text 6s linear infinite;
         }
 
-        .card-rise {
-          transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
+        @keyframes pulseDot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.35; }
         }
-        .card-rise:hover {
+        .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+
+        .glass-card {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          backdrop-filter: blur(12px);
+          transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s ease, background 0.3s ease;
+        }
+        .glass-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(56,189,248,0.35);
+          background: rgba(255,255,255,0.06);
+        }
+
+        .spec-pill {
+          transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+        }
+        .spec-pill:hover {
+          transform: translateY(-3px);
+          border-color: rgba(56,189,248,0.4) !important;
+        }
+
+        .cred-row {
+          transition: background 0.25s ease, border-color 0.25s ease;
+        }
+        .cred-row:hover {
+          background: rgba(255,255,255,0.05);
+          border-color: rgba(56,189,248,0.3) !important;
+        }
+
+        .cert-thumb img { transition: transform 0.4s ease; }
+        .cert-thumb:hover img { transform: scale(1.15); }
+
+        .loc-glass {
+          transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s ease;
+        }
+        .loc-glass:hover {
           transform: translateY(-6px);
-          box-shadow: 0 24px 60px -10px rgba(0,0,0,0.13);
-        }
-
-        .spec-card {
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .spec-card:hover {
-          transform: translateY(-4px) scale(1.02);
-          box-shadow: 0 16px 40px -8px rgba(0,0,0,0.12);
-        }
-
-        .loc-card {
-          transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
-        }
-        .loc-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 32px 70px -12px rgba(0,0,0,0.14);
+          border-color: rgba(56,189,248,0.4) !important;
         }
 
         .btn-primary {
@@ -162,648 +254,516 @@ const AboutDoctor = () => {
         }
         .btn-primary:hover {
           transform: translateY(-2px);
-          filter: brightness(1.08);
-          box-shadow: 0 8px 28px rgba(14,165,233,0.5);
+          filter: brightness(1.1);
+          box-shadow: 0 10px 32px rgba(56,189,248,0.5);
         }
         .btn-primary:active { transform: scale(0.97); }
 
         .btn-ghost {
-          transition: background 0.2s ease, transform 0.2s ease;
+          transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
         }
-        .btn-ghost:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
-        .btn-ghost:active { transform: scale(0.97); }
-
-        .dot-grid {
-          background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
-          background-size: 28px 28px;
+        .btn-ghost:hover {
+          background: rgba(255,255,255,0.08);
+          border-color: rgba(255,255,255,0.3);
+          transform: translateY(-1px);
         }
 
         @keyframes shine {
-          0%   { left: -100%; }
+          0% { left: -100%; }
           100% { left: 200%; }
         }
         .photo-shine::after {
           content: '';
           position: absolute;
           top: 0; left: -100%;
-          width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
-          animation: shine 4s ease-in-out infinite;
+          width: 55%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+          animation: shine 4.5s ease-in-out infinite;
         }
 
-        .cert-thumb {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .dot-grid {
+          background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+          background-size: 26px 26px;
         }
-        .cert-thumb:hover {
-          transform: translateY(-2px) scale(1.05);
-          box-shadow: 0 8px 20px rgba(14,165,233,0.35);
+
+        .scroll-hide { scrollbar-width: none; }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+
+        .cert-cta-pill {
+          background: rgba(16,185,129,0.14);
+          border: 1px solid rgba(52,211,153,0.45);
+          transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+        }
+        .cert-cta-pill:hover {
+          transform: translateY(-2px);
+          background: rgba(16,185,129,0.22);
+          border-color: rgba(52,211,153,0.7);
+        }
+        .cert-cta-pill:active { transform: scale(0.97); }
+        @keyframes certGlowSweep {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(220%); }
+        }
+        .cert-cta-glow {
+          position: absolute;
+          top: 0; left: 0;
+          width: 40%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+          animation: certGlowSweep 3.2s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        @media (min-width: 1024px) {
+          .doctor-split-left { position: sticky; top: 0; height: 100vh; }
         }
       `}</style>
 
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background: "linear-gradient(155deg, #080f1e 0%, #0c1e3a 55%, #101d35 100%)",
-          paddingTop: "clamp(5rem, 10vw, 7rem)",
-          paddingBottom: "clamp(5rem, 10vw, 7rem)",
-        }}
-      >
-        {/* Noise texture */}
+      <div className="lg:flex">
+
+        {/* ════════════════════════════════════════════════════════════════
+            LEFT — sticky photo panel (desktop) / hero (mobile)
+        ════════════════════════════════════════════════════════════════ */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.018]"
+          className="doctor-split-left relative w-full lg:w-[44%] flex-shrink-0 overflow-hidden"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E")`,
-            backgroundSize: "200px",
+            background: "linear-gradient(165deg, #0a1830 0%, #050c18 100%)",
+            minHeight: "100vh",
           }}
-        />
-        {/* Dot grid */}
-        <div className="absolute inset-0 pointer-events-none dot-grid" />
-        {/* Glow orbs */}
-        <div
-          className="absolute -top-40 right-0 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle at 70% 30%, rgba(14,165,233,0.09), transparent 65%)" }}
-        />
-        <div
-          className="absolute -bottom-40 -left-20 w-[500px] h-[500px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle at 30% 70%, rgba(124,58,237,0.08), transparent 65%)" }}
-        />
+        >
+          {/* Noise + dot texture */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.02]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E")`,
+              backgroundSize: "180px",
+            }}
+          />
+          <div className="absolute inset-0 pointer-events-none dot-grid" />
 
-        <div className="max-w-6xl mx-auto px-5 md:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+          {/* Ambient glows */}
+          <div
+            className="absolute top-0 left-0 w-[420px] h-[420px] rounded-full pointer-events-none float-slow"
+            style={{ background: "radial-gradient(circle, rgba(56,189,248,0.16), transparent 70%)" }}
+          />
+          <div
+            className="absolute bottom-0 right-0 w-[380px] h-[380px] rounded-full pointer-events-none"
+            style={{ background: "radial-gradient(circle, rgba(167,139,250,0.14), transparent 70%)" }}
+          />
 
-            {/* ── Doctor Visual ── */}
-            <div className="flex justify-center order-1 lg:order-none" style={fadeUp(0)}>
-              <div className="relative">
-
-                {/* Outer glow */}
-                <div
-                  className="absolute inset-0 rounded-[2.5rem] pointer-events-none"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(14,165,233,0.15), rgba(124,58,237,0.1))",
-                    transform: "scale(1.05)",
-                    filter: "blur(20px)",
-                  }}
+          {/* Doctor photo — fills the panel */}
+          <div className="relative h-full min-h-[100vh] flex flex-col">
+            <div className="relative flex-1 photo-shine overflow-hidden">
+              {DOCTOR.photo ? (
+                <img
+                  src={DOCTOR.photo}
+                  alt={DOCTOR.name}
+                  className="absolute inset-0 w-full h-full object-cover object-top"
                 />
-
-                {/* Photo Card */}
-                <div
-                  className="relative w-72 md:w-80 rounded-[2.5rem] overflow-hidden photo-shine"
-                  style={{
-                    boxShadow: "0 40px 90px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)",
-                    background: "linear-gradient(160deg, #1a3a6e 0%, #0c1e3a 100%)",
-                  }}
-                >
-                  <div className="w-full h-[420px]">
-                    {DOCTOR.photo ? (
-                      <img
-                        src={DOCTOR.photo}
-                        alt={DOCTOR.name}
-                        className="w-full h-full object-cover object-top"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex flex-col items-center justify-center gap-5"
-                        style={{ background: "linear-gradient(160deg, #1e3a5f 0%, #0c1e3a 100%)" }}
-                      >
-                        <div
-                          className="w-32 h-32 rounded-full flex items-center justify-center float"
-                          style={{
-                            background: "linear-gradient(135deg, #0284c7, #7c3aed)",
-                            boxShadow: "0 0 0 10px rgba(14,165,233,0.1), 0 0 0 22px rgba(14,165,233,0.05)",
-                          }}
-                        >
-                          <span className="text-white font-display text-4xl font-bold" style={{ letterSpacing: "-0.02em" }}>
-                            Dr
-                          </span>
-                        </div>
-                        <p className="text-white/20 text-[11px] font-medium tracking-widest uppercase">
-                          Doctor Photo Here
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Name overlay */}
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
                   <div
-                    className="absolute bottom-0 inset-x-0 px-6 py-5"
-                    style={{ background: "linear-gradient(to top, rgba(8,15,30,0.97) 0%, transparent 100%)" }}
-                  >
-                    <p className="text-white font-display text-xl font-bold leading-tight">{DOCTOR.name}</p>
-                    <p className="text-sky-400 text-xs font-semibold mt-1 tracking-wide">{DOCTOR.title}</p>
-                  </div>
-
-                  {/* Certified badge */}
-                  <div
-                    className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur-md"
+                    className="w-40 h-40 rounded-full flex items-center justify-center float-slow"
                     style={{
-                      background: "rgba(14,165,233,0.18)",
-                      border: "1px solid rgba(14,165,233,0.35)",
+                      background: "linear-gradient(135deg, #0284c7, #7c3aed)",
+                      boxShadow: "0 0 0 14px rgba(56,189,248,0.08), 0 0 0 28px rgba(56,189,248,0.04)",
                     }}
                   >
-                    <BadgeCheck size={12} color="#38bdf8" strokeWidth={2.5} />
-                    <span className="text-[10px] text-sky-300 font-bold tracking-wider">Certified Expert</span>
+                    <span className="text-white font-display text-5xl font-bold">Dr</span>
                   </div>
                 </div>
+              )}
 
-                {/* Floating: Years */}
+              {/* Bottom gradient for text legibility */}
+              <div
+                className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
+                style={{ background: "linear-gradient(to top, #050c18 0%, rgba(5,12,24,0.7) 35%, transparent 100%)" }}
+              />
+
+              {/* Top badges row */}
+              <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
                 <div
-                  className="absolute -bottom-5 -left-8 bg-white rounded-2xl px-5 py-4 card-rise cursor-default"
-                  style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.14)" }}
+                  className="flex items-center gap-1.5 rounded-full px-3.5 py-2 backdrop-blur-md"
+                  style={{ background: "rgba(56,189,248,0.2)", border: "1px solid rgba(56,189,248,0.4)" }}
                 >
-                  <p className="font-display text-4xl font-bold text-gray-900" style={{ letterSpacing: "-0.04em" }}>
-                    <Counter target={DOCTOR.yearsExperience || 10} suffix="+" />
-                  </p>
-                  <p className="text-[11px] text-gray-500 font-semibold mt-1 leading-tight uppercase tracking-wider">
-                    Years of<br />Experience
-                  </p>
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-300 pulse-dot" />
+                  <span className="text-[11px] text-sky-200 font-bold tracking-wider">Available now</span>
                 </div>
-
-                {/* Floating: Rating */}
-                <div
-                  className="absolute -top-5 -right-8 bg-white rounded-2xl px-4 py-3.5 card-rise cursor-default"
-                  style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}
-                >
-                  <div className="flex items-center gap-0.5 mb-1.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} fill="#f59e0b" color="#f59e0b" />
-                    ))}
+                {certifiedCount > 0 && (
+                  <div
+                    className="flex items-center gap-1.5 rounded-full px-3.5 py-2 backdrop-blur-md"
+                    style={{ background: "rgba(16,185,129,0.18)", border: "1px solid rgba(16,185,129,0.4)" }}
+                  >
+                    <ShieldCheck size={13} color="#34d399" strokeWidth={2.5} />
+                    <span className="text-[11px] text-emerald-200 font-bold tracking-wider">{certifiedCount} verified</span>
                   </div>
-                  <p className="text-sm font-bold text-gray-800">4.9 / 5.0</p>
-                  <p className="text-[10px] text-gray-400 font-medium mt-0.5">Patient Rating</p>
-                </div>
-
-                {/* Floating: Patients */}
-                <div
-                  className="absolute -bottom-5 -right-6 bg-white rounded-2xl px-4 py-3.5 card-rise cursor-default"
-                  style={{ boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}
-                >
-                  <p className="font-display text-3xl font-bold text-gray-900" style={{ letterSpacing: "-0.04em" }}>
-                    <Counter target={DOCTOR.patientsCount || 500} suffix="+" />
-                  </p>
-                  <p className="text-[11px] text-gray-500 font-semibold mt-1 uppercase tracking-wider">Patients</p>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Doctor Text ── */}
-            <div className="flex flex-col gap-6 text-white" style={fadeUp(160)}>
-              {/* Label */}
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-px bg-gradient-to-r from-sky-400 to-transparent" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">
-                  Meet Your Doctor
-                </span>
+                )}
               </div>
 
-              {/* Name & Title */}
-              <div>
+              {/* Name block, bottom of photo */}
+              <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-px bg-gradient-to-r from-sky-400 to-transparent" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-sky-300">
+                    Meet your doctor
+                  </span>
+                </div>
                 <h1
-                  className="font-display leading-none mb-2 text-[clamp(2.2rem,5vw,3.2rem)] font-bold"
+                  className="font-display font-bold text-white leading-[1.05] mb-2 text-[clamp(2rem,4.5vw,3rem)]"
+                  style={{ letterSpacing: "-0.02em" }}
                 >
                   {DOCTOR.name}
                 </h1>
-                <p className="text-sky-300 text-base font-medium">{DOCTOR.title}</p>
-              </div>
+                <p className="text-sky-300 text-sm md:text-base font-semibold mb-5">{DOCTOR.title}</p>
 
-              {/* Degrees — now object-aware, with optional certificate thumbnail */}
-              {normalizedDegrees.length > 0 && (
+                {/* Rating row + Verified Certificates pill */}
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                  <div className="flex items-center gap-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={13} fill="#fbbf24" color="#fbbf24" />
+                    ))}
+                    <span className="text-white/70 text-xs font-semibold ml-1">4.9 patient rating</span>
+                  </div>
+
+                  {certifiedCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGalleryStartIndex(0);
+                        setGalleryOpen(true);
+                      }}
+                      className="cert-cta-pill group relative inline-flex items-center gap-2 pl-2 pr-3.5 py-1.5 rounded-full overflow-hidden"
+                    >
+                      <span className="cert-cta-glow" />
+                      <span className="relative w-6 h-6 rounded-full flex items-center justify-center bg-emerald-400/25 flex-shrink-0">
+                        <ShieldCheck size={12} className="text-emerald-300" strokeWidth={2.5} />
+                      </span>
+                      <span className="relative text-[11px] font-bold text-emerald-100 tracking-wide">
+                        Verified — view {certifiedCount} certificate{certifiedCount > 1 ? "s" : ""}
+                      </span>
+                      <ChevronRight size={13} className="relative text-emerald-200 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  )}
+                </div>
+
+                {/* CTAs */}
+                <div className="flex flex-wrap gap-2.5">
+                  <Link
+                    to="/appointment"
+                    className="btn-primary inline-flex items-center gap-2 px-5 py-3 rounded-xl text-white font-bold text-xs bg-gradient-to-br from-sky-500 to-sky-400"
+                    style={{ boxShadow: "0 8px 24px rgba(56,189,248,0.4)" }}
+                  >
+                    Book consultation
+                    <ArrowRight size={13} />
+                  </Link>
+                  <a
+                    href="https://wa.me/8801745565435"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-ghost inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-xs border border-white/20 text-white/85"
+                  >
+                    <MessageCircle size={13} />
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════
+            RIGHT — scrollable content
+        ════════════════════════════════════════════════════════════════ */}
+        <div className="w-full lg:w-[56%] flex flex-col">
+
+          {/* ── Stat strip ── */}
+          <div className="px-6 md:px-12 pt-12 md:pt-16">
+            <Reveal>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { icon: Calendar, value: DOCTOR.yearsExperience || 10, suffix: "+", label: "Years exp." },
+                  { icon: Users, value: DOCTOR.patientsCount || 500, suffix: "+", label: "Patients" },
+                  { icon: ShieldCheck, value: certifiedCount || normalizedDegrees.length || 1, suffix: "", label: "Credentials" },
+                  { icon: Building2, value: myBranches.length || 1, suffix: "", label: "Location" + (myBranches.length > 1 ? "s" : "") },
+                ].map(({ icon: Icon, value, suffix, label }, i) => (
+                  <div key={i} className="glass-card rounded-2xl px-4 py-5 flex flex-col gap-2">
+                    <Icon size={16} className="text-sky-400" strokeWidth={1.75} />
+                    <p className="font-display font-bold text-white text-2xl leading-none" style={{ letterSpacing: "-0.03em" }}>
+                      <Counter target={value} suffix={suffix} />
+                    </p>
+                    <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+
+          {/* ── Bio ── */}
+          {DOCTOR.bio && (
+            <div className="px-6 md:px-12 pt-12 md:pt-16">
+              <Reveal>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-px bg-gradient-to-r from-sky-400 to-transparent" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">About</span>
+                </div>
+                <p className="text-white/65 text-base md:text-lg leading-relaxed" style={{ fontWeight: 400 }}>
+                  {DOCTOR.bio}
+                </p>
+              </Reveal>
+            </div>
+          )}
+
+          {/* ── Specializations ── */}
+          {DOCTOR.specializations?.length > 0 && (
+            <div className="px-6 md:px-12 pt-12 md:pt-16">
+              <Reveal>
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-7 h-px bg-gradient-to-r from-sky-400 to-transparent" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">Specializations</span>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {DOCTOR.specializations.map((spec) => {
+                    const Icon = getIcon(spec.iconKey);
+                    return (
+                      <div
+                        key={spec.label}
+                        className="spec-pill flex items-center gap-2 rounded-full pl-2.5 pr-4 py-2 border"
+                        style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)" }}
+                      >
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${spec.color}25`, color: spec.color }}
+                        >
+                          <Icon size={12} strokeWidth={2} />
+                        </div>
+                        <span className="text-white/75 text-xs font-semibold">{spec.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Reveal>
+            </div>
+          )}
+
+          {/* ── Credentials with certificates ── */}
+          {normalizedDegrees.length > 0 && (
+            <div className="px-6 md:px-12 pt-12 md:pt-16">
+              <Reveal>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-px bg-gradient-to-r from-sky-400 to-transparent" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">Credentials</span>
+                  </div>
+                  {certifiedCount > 0 && (
+                    <span className="text-[10px] font-semibold text-emerald-300 flex items-center gap-1">
+                      <ShieldCheck size={11} /> {certifiedCount} document-verified
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-col gap-2.5">
                   {normalizedDegrees.map((deg, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-sky-500/20 text-sky-300">
-                        <CheckCircle2 size={11} strokeWidth={2.5} />
+                    <div
+                      key={i}
+                      className="cred-row flex items-center gap-3.5 rounded-2xl px-4 py-3.5 border"
+                      style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}
+                    >
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-sky-500/15 text-sky-300">
+                        <GraduationCap size={15} strokeWidth={1.75} />
                       </div>
-                      <span className="text-sm text-white/75 leading-relaxed flex-1">{deg.title}</span>
-                      {deg.certificateImage && (
+                      <span className="text-white/80 text-sm font-medium leading-snug flex-1">{deg.title}</span>
+                      {deg.certificateImage ? (
                         <button
                           type="button"
-                          onClick={() =>
-                            setActiveCertificate({ image: deg.certificateImage, title: deg.title })
-                          }
-                          className="cert-thumb relative w-8 h-8 rounded-lg overflow-hidden border border-sky-400/40 flex-shrink-0"
+                          onClick={() => {
+                            const idx = certifiedDegrees.findIndex((d) => d.certificateImage === deg.certificateImage);
+                            setGalleryStartIndex(idx >= 0 ? idx : 0);
+                            setGalleryOpen(true);
+                          }}
+                          className="cert-thumb relative w-11 h-11 rounded-lg overflow-hidden border-2 flex-shrink-0"
+                          style={{ borderColor: "rgba(52,211,153,0.5)" }}
                           title="View certificate"
                         >
-                          <img
-                            src={deg.certificateImage}
-                            alt={deg.title}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                            <FileBadge size={11} className="text-white" />
+                          <img src={deg.certificateImage} alt={deg.title} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-1">
+                            <ShieldCheck size={11} className="text-emerald-300" />
                           </div>
                         </button>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-white/5 text-white/25">
+                          <CheckCircle2 size={13} />
+                        </div>
                       )}
                     </div>
                   ))}
                 </div>
-              )}
-
-              {/* Bio */}
-              {DOCTOR.bio && (
-                <p className="text-sm text-white/50 leading-relaxed pl-4 border-l-2 border-sky-500/35">
-                  {DOCTOR.bio}
-                </p>
-              )}
-
-              {/* CTAs */}
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Link
-                  to="/appointment"
-                  className="btn-primary inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-white font-semibold text-sm bg-gradient-to-br from-sky-600 to-sky-400 shadow-[0_8px_28px_rgba(14,165,233,0.42)]"
-                >
-                  Book a Consultation
-                  <ArrowRight size={15} />
-                </Link>
-                <a
-                  href="https://wa.me/8801745565435"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-ghost inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-semibold text-sm border border-white/20 text-white/80"
-                >
-                  <MessageCircle size={15} />
-                  WhatsApp
-                </a>
-              </div>
+              </Reveal>
             </div>
-          </div>
-        </div>
-      </section>
+          )}
 
-      {/* ── SPECIALIZATIONS ──────────────────────────────────────────────── */}
-      {(DOCTOR.specializations?.length > 0 || DOCTOR.achievements?.length > 0) && (
-        <section className="py-24 px-5 md:px-10 bg-white">
-          <div className="max-w-6xl mx-auto">
-
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 mb-4">
-                <div className="w-8 h-px bg-sky-400" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-500">Expertise</span>
-                <div className="w-8 h-px bg-sky-400" />
-              </div>
-              <h2 className="font-display font-bold text-gray-900 text-[clamp(1.8rem,4vw,2.8rem)]">
-                Areas of <span className="shimmer">Specialization</span>
-              </h2>
-              <p className="text-gray-400 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
-                Comprehensive dental care powered by the latest technology and genuine compassion.
-              </p>
-            </div>
-
-            {/* Spec grid */}
-            {DOCTOR.specializations?.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-                {DOCTOR.specializations.map((spec) => {
-                  const Icon = getIcon(spec.iconKey);
-                  return (
-                    <div
-                      key={spec.label}
-                      className="spec-card rounded-2xl p-5 flex flex-col items-center text-center gap-3 cursor-default"
-                      style={{
-                        background: spec.bg,
-                        border: `1.5px solid ${spec.color}22`,
-                      }}
-                    >
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center"
-                        style={{ background: `${spec.color}1a`, color: spec.color }}
-                      >
-                        <Icon size={20} strokeWidth={1.75} />
-                      </div>
-                      <p className="text-xs font-semibold text-gray-700 leading-tight">{spec.label}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Achievements grid */}
-            {DOCTOR.achievements?.length > 0 && (
-              <div className="mt-10 grid grid-cols-2 md:grid-cols-3 gap-3.5">
-                {DOCTOR.achievements.map((item, i) => {
-                  const Icon = getIcon(item.iconKey);
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 rounded-xl px-5 py-4 card-rise cursor-default bg-slate-50 border border-slate-200 shadow-sm"
-                    >
-                      <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 bg-sky-500/10 text-sky-600">
-                        <Icon size={14} strokeWidth={2} />
-                      </div>
-                      <span className="text-sm text-gray-700 font-medium leading-tight">{item.text}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ── STATS + STORY ────────────────────────────────────────────────── */}
-      <section className="py-24 px-5 md:px-10 bg-[#f7f9fc]">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-14 items-center">
-
-            {/* Stats 2x2 */}
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { target: DOCTOR.patientsCount || 500, suffix: "+", label: "Patients Treated", sub: "Across Dhaka",       icon: Users,      color: "#0ea5e9" },
-                { target: DOCTOR.yearsExperience || 10, suffix: "+", label: "Years Experience",  sub: "Trusted care",       icon: Calendar,   color: "#7c3aed" },
-                { target: 98,   suffix: "%", label: "Success Rate",      sub: "Clinically verified", icon: TrendingUp, color: "#10b981" },
-                { target: branches?.length || 1, suffix: "",  label: "Locations",  sub: "Across Dhaka",  icon: Building2,  color: "#ec4899" },
-              ].map(({ target, suffix, label, sub, icon: Icon, color }) => (
-                <div
-                  key={label}
-                  className="rounded-2xl p-6 card-rise cursor-default bg-white border border-slate-200 shadow-sm"
-                >
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: `${color}15`, color }}
-                  >
-                    <Icon size={17} strokeWidth={1.75} />
-                  </div>
-                  <p
-                    className="font-display font-bold text-gray-900 leading-none text-[clamp(2rem,5vw,2.75rem)]"
-                    style={{ letterSpacing: "-0.04em" }}
-                  >
-                    <Counter target={target} suffix={suffix} />
-                  </p>
-                  <p className="text-sm font-semibold text-gray-800 mt-2">{label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+          {/* ── Achievements ── */}
+          {DOCTOR.achievements?.length > 0 && (
+            <div className="px-6 md:px-12 pt-12 md:pt-16">
+              <Reveal>
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-7 h-px bg-gradient-to-r from-sky-400 to-transparent" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">Recognition</span>
                 </div>
-              ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {DOCTOR.achievements.map((item, i) => {
+                    const Icon = getIcon(item.iconKey);
+                    return (
+                      <div
+                        key={i}
+                        className="glass-card flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                      >
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-violet-500/15 text-violet-300">
+                          <Icon size={15} strokeWidth={1.75} />
+                        </div>
+                        <span className="text-white/75 text-sm font-medium leading-snug">{item.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Reveal>
             </div>
+          )}
 
-            {/* Story + Quote */}
-            <div className="flex flex-col gap-6">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-500">Our Story</span>
-                <h2 className="font-display font-bold text-gray-900 mt-2 text-[clamp(1.6rem,3.5vw,2.2rem)]">
-                  Why Laser Dental Point?
-                </h2>
-              </div>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                The clinic was built around one doctor's vision — that dental care shouldn't be feared. Every detail, from the calm interiors to the laser-assisted painless procedures, was designed to make patients feel at ease.
-              </p>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Believing that a healthy smile is a gateway to confidence, the clinic now operates across Dhaka — served by doctors who ensure consistent, personal care at every visit.
-              </p>
-
-              {/* Quote card */}
-              {DOCTOR.quote && (
-                <div className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-sky-100 to-violet-100 border-l-4 border-sky-600">
-                  <div className="absolute top-3 right-4 font-display text-8xl font-bold leading-none select-none pointer-events-none text-sky-600/10">
-                    "
-                  </div>
-                  <p className="text-sm text-gray-700 italic leading-relaxed relative z-10">
+          {/* ── Quote ── */}
+          {DOCTOR.quote && (
+            <div className="px-6 md:px-12 pt-12 md:pt-16">
+              <Reveal>
+                <div
+                  className="rounded-3xl p-7 md:p-9 relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(167,139,250,0.08))",
+                    border: "1px solid rgba(56,189,248,0.2)",
+                  }}
+                >
+                  <QuoteIcon
+                    size={100}
+                    className="absolute -top-2 -right-2 text-sky-400/10 pointer-events-none select-none"
+                    fill="currentColor"
+                  />
+                  <p
+                    className="text-white text-lg md:text-xl leading-relaxed relative z-10"
+                    style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: "italic", fontWeight: 400 }}
+                  >
                     "{DOCTOR.quote}"
                   </p>
-                  <div className="flex items-center gap-2.5 mt-4">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-sky-600 to-violet-600">
+                  <div className="flex items-center gap-3 mt-6">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                      style={{ background: "linear-gradient(135deg, #38bdf8, #a78bfa)", boxShadow: "0 6px 18px rgba(56,189,248,0.4)" }}
+                    >
                       {DOCTOR.name.split(" ")[1]?.[0] || "D"}
                     </div>
-                    <p className="text-xs text-sky-700 font-bold">— {DOCTOR.name}</p>
+                    <div>
+                      <p className="text-white text-sm font-bold leading-tight">{DOCTOR.name}</p>
+                      <p className="text-white/40 text-xs">{DOCTOR.title}</p>
+                    </div>
                   </div>
                 </div>
-              )}
+              </Reveal>
             </div>
-          </div>
-        </div>
-      </section>
+          )}
 
-      {/* ── LOCATIONS (dynamic — only branches this doctor is assigned to) ── */}
-      {DOCTOR.branchSlugs?.length > 0 && (
-        <section className="py-24 px-5 md:px-10 bg-white">
-          <div className="max-w-6xl mx-auto">
-
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 mb-4">
-                <div className="w-8 h-px bg-sky-400" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-500">Find Us</span>
-                <div className="w-8 h-px bg-sky-400" />
-              </div>
-              <h2 className="font-display font-bold text-gray-900 text-[clamp(1.8rem,4vw,2.8rem)]">
-                Where to <span className="shimmer">Find {DOCTOR.name.split(" ")[1] || "Us"}</span>
-              </h2>
-              <p className="text-gray-400 text-sm mt-3 max-w-sm mx-auto leading-relaxed">
-                Visit at any of the locations below — same trusted care at every branch.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {(branches || [])
-                .filter((b) => DOCTOR.branchSlugs.includes(b.slug))
-                .map((loc) => {
-                  const accent = "#0ea5e9";
-                  return (
+          {/* ── Locations ── */}
+          {myBranches.length > 0 && (
+            <div className="px-6 md:px-12 pt-12 md:pt-16">
+              <Reveal>
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-7 h-px bg-gradient-to-r from-sky-400 to-transparent" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">Find this doctor</span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {myBranches.map((loc) => (
                     <div
                       key={loc._id || loc.slug}
-                      className="loc-card rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-md"
+                      className="loc-glass rounded-2xl p-5 border"
+                      style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.09)" }}
                     >
-                      {/* Card header */}
-                      <div
-                        className="px-7 py-6 flex items-start justify-between"
-                        style={{
-                          background: `linear-gradient(135deg, ${accent}0f, ${accent}06)`,
-                          borderBottom: `1px solid ${accent}1c`,
-                        }}
-                      >
+                      <div className="flex items-start justify-between gap-3 mb-3">
                         <div>
-                          <span
-                            className="text-[11px] font-bold uppercase tracking-[0.18em] px-3 py-1 rounded-full"
-                            style={{ background: `${accent}18`, color: accent }}
-                          >
-                            {loc.name}
-                          </span>
-                          <h3 className="font-display font-bold text-gray-900 mt-2.5 leading-tight text-[1.3rem]">
-                            Laser Dental Point
-                          </h3>
-                          <p className="text-sm font-semibold mt-1" style={{ color: accent }}>
-                            {loc.area}
-                          </p>
+                          <p className="text-white font-bold text-sm">{loc.name}</p>
+                          <p className="text-sky-300 text-xs font-semibold mt-0.5">{loc.area}</p>
                         </div>
-                        <div
-                          className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ml-4"
-                          style={{ background: `${accent}18`, color: accent }}
-                        >
-                          <MapPin size={20} strokeWidth={1.75} />
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-sky-500/15 text-sky-300">
+                          <MapPin size={16} strokeWidth={1.75} />
                         </div>
                       </div>
-
-                      {/* Card body */}
-                      <div className="px-7 py-6 flex flex-col gap-5">
-
-                        {/* Address */}
-                        {loc.address && (
-                          <div className="flex items-start gap-3.5">
-                            <div
-                              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                              style={{ background: `${accent}12`, color: accent }}
-                            >
-                              <MapPin size={15} strokeWidth={1.75} />
-                            </div>
-                            <div>
-                              <p className="text-[11px] text-gray-400 font-semibold mb-0.5 uppercase tracking-wide">Address</p>
-                              <p className="text-sm text-gray-700 font-medium leading-relaxed">{loc.address}</p>
-                            </div>
-                          </div>
+                      {loc.address && (
+                        <p className="text-white/45 text-xs leading-relaxed mb-3">{loc.address}</p>
+                      )}
+                      <div className="flex gap-2">
+                        {loc.mapLink && (
+                          <a
+                            href={loc.mapLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-500/90 hover:bg-sky-500 transition-colors"
+                          >
+                            <MapPin size={12} /> Directions
+                          </a>
                         )}
-
-                        {/* Phone */}
                         {loc.phone && (
-                          <div className="flex items-start gap-3.5">
-                            <div
-                              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                              style={{ background: `${accent}12`, color: accent }}
-                            >
-                              <Phone size={15} strokeWidth={1.75} />
-                            </div>
-                            <div>
-                              <p className="text-[11px] text-gray-400 font-semibold mb-0.5 uppercase tracking-wide">Phone</p>
-                              <a
-                                href={`tel:${loc.phone}`}
-                                className="text-sm font-bold hover:underline"
-                                style={{ color: accent }}
-                              >
-                                {loc.phone}
-                              </a>
-                            </div>
-                          </div>
+                          <a
+                            href={`tel:${loc.phone}`}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white/80 border border-white/15 hover:bg-white/5 transition-colors"
+                          >
+                            <Phone size={12} /> Call
+                          </a>
                         )}
-
-                        {/* Schedule */}
-                        {loc.hours?.length > 0 && (
-                          <div className="flex items-start gap-3.5">
-                            <div
-                              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                              style={{ background: `${accent}12`, color: accent }}
-                            >
-                              <Clock size={15} strokeWidth={1.75} />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-[11px] text-gray-400 font-semibold mb-2 uppercase tracking-wide">Schedule</p>
-                              <div className="flex flex-col gap-2">
-                                {loc.hours.map((s, i) => (
-                                  <div key={i} className="flex items-center justify-between gap-2">
-                                    <span className="text-xs text-gray-600 leading-tight">{s.label}</span>
-                                    <span
-                                      className="text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-                                      style={{ background: `${accent}15`, color: accent }}
-                                    >
-                                      {s.morning || s.evening || "—"}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex gap-2.5 pt-3 border-t border-gray-100">
-                          {loc.mapLink && (
-                            <a
-                              href={loc.mapLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-white transition-all active:scale-95 hover:opacity-90"
-                              style={{ background: accent, boxShadow: `0 4px 18px ${accent}40` }}
-                            >
-                              <MapPin size={14} strokeWidth={2} />
-                              Get Directions
-                            </a>
-                          )}
-                          {loc.whatsapp && (
-                            <a
-                              href={`https://wa.me/${loc.whatsapp}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold text-emerald-600 transition-all active:scale-95 hover:bg-emerald-100 bg-emerald-50 border border-emerald-200"
-                            >
-                              <MessageCircle size={14} strokeWidth={2} />
-                              WhatsApp
-                            </a>
-                          )}
-                        </div>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              </Reveal>
             </div>
-          </div>
-        </section>
-      )}
+          )}
 
-      {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
-      <section className="py-16 px-5 md:px-10 bg-[#f7f9fc]">
-        <div className="max-w-3xl mx-auto">
-          <div
-            className="rounded-[2rem] px-8 py-16 text-center relative overflow-hidden"
-            style={{
-              background: "linear-gradient(155deg, #080f1e 0%, #0c1e3a 100%)",
-              boxShadow: "0 30px 80px rgba(8,15,30,0.25)",
-            }}
-          >
-            {/* Noise */}
-            <div
-              className="absolute inset-0 pointer-events-none opacity-[0.018]"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E")`,
-                backgroundSize: "180px",
-              }}
-            />
-            {/* Dot grid */}
-            <div className="absolute inset-0 pointer-events-none dot-grid" />
-            {/* Orbs */}
-            <div
-              className="absolute -top-24 -right-24 w-64 h-64 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(56,189,248,0.12), transparent)" }}
-            />
-            <div
-              className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(129,140,248,0.1), transparent)" }}
-            />
-
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 mb-5">
-                <Sparkles size={14} color="#38bdf8" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">
-                  Ready to get started?
-                </span>
+          {/* ── Final CTA ── */}
+          <div className="px-6 md:px-12 py-12 md:py-16">
+            <Reveal>
+              <div
+                className="rounded-3xl p-8 md:p-10 text-center relative overflow-hidden"
+                style={{
+                  background: "linear-gradient(155deg, rgba(56,189,248,0.12), rgba(167,139,250,0.1))",
+                  border: "1px solid rgba(56,189,248,0.25)",
+                }}
+              >
+                <Sparkles size={16} className="text-sky-300 mx-auto mb-4" />
+                <h2 className="font-display font-bold text-white text-xl md:text-2xl mb-2 leading-snug">
+                  Your perfect smile is one<br />appointment away.
+                </h2>
+                <p className="text-white/45 text-sm mb-7 max-w-sm mx-auto leading-relaxed">
+                  Book a consultation with {DOCTOR.name} — personal, professional, painless care.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+                  <Link
+                    to="/appointment"
+                    className="btn-primary inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-white font-bold text-sm bg-gradient-to-br from-sky-500 to-sky-400"
+                    style={{ boxShadow: "0 8px 26px rgba(56,189,248,0.45)" }}
+                  >
+                    Book appointment
+                    <ChevronRight size={15} strokeWidth={2.5} />
+                  </Link>
+                  <a
+                    href="tel:01745565435"
+                    className="btn-ghost inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm border border-white/20 text-white/85"
+                  >
+                    <Phone size={14} /> 01745565435
+                  </a>
+                </div>
               </div>
-              <h2 className="font-display font-bold text-white mb-3 text-[clamp(1.6rem,3.5vw,2.4rem)]">
-                Your perfect smile is<br />one appointment away.
-              </h2>
-              <p className="text-white/45 text-sm mb-10 max-w-md mx-auto leading-relaxed">
-                Book a consultation with {DOCTOR.name} — we'll take care of the rest.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link
-                  to="/appointment"
-                  className="btn-primary inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl text-white font-bold text-sm bg-gradient-to-br from-sky-600 to-sky-400 shadow-[0_8px_28px_rgba(14,165,233,0.45)]"
-                >
-                  Book Appointment
-                  <ChevronRight size={16} strokeWidth={2.5} />
-                </Link>
-                <a
-                  href="tel:01745565435"
-                  className="btn-ghost inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-sm border border-white/20 text-white/80"
-                >
-                  <Phone size={15} />
-                  01745565435
-                </a>
-              </div>
-            </div>
+            </Reveal>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ── Certificate lightbox ── */}
-      {activeCertificate && (
-        <CertificateModal
-          image={activeCertificate.image}
-          title={activeCertificate.title}
-          onClose={() => setActiveCertificate(null)}
+      {galleryOpen && certifiedDegrees.length > 0 && (
+        <CertificateGalleryModal
+          certificates={certifiedDegrees}
+          startIndex={galleryStartIndex}
+          onClose={() => setGalleryOpen(false)}
         />
       )}
     </div>
