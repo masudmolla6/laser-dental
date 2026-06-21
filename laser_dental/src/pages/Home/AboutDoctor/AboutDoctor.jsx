@@ -4,7 +4,7 @@ import {
   MapPin, Clock, Phone, Star, ArrowRight, CheckCircle2,
   MessageCircle, Award, Calendar, Users, TrendingUp, Building2,
   Sparkles, BadgeCheck, UserRound, X, ShieldCheck, Quote as QuoteIcon,
-  ChevronRight, GraduationCap,
+  ChevronRight, GraduationCap, Minus, Plus, Maximize2,
 } from "lucide-react";
 import AboutDoctorSkeleton from "./AboutDoctorSkeleton";
 import { getIcon } from "../../../utils/iconMap";
@@ -73,10 +73,65 @@ const Reveal = ({ children, delay = 0 }) => {
 // ── Certificate lightbox modal ───────────────────────────────────────────────
 const CertificateGalleryModal = ({ certificates, startIndex, onClose }) => {
   const [activeIndex, setActiveIndex] = useState(startIndex || 0);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const dragState = useRef({ dragging: false, startX: 0, startY: 0, panX: 0, panY: 0 });
   const active = certificates[activeIndex];
 
-  const goPrev = () => setActiveIndex((i) => (i === 0 ? certificates.length - 1 : i - 1));
-  const goNext = () => setActiveIndex((i) => (i === certificates.length - 1 ? 0 : i + 1));
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 3.5;
+  const STEP = 0.6;
+
+  const resetZoom = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const switchTo = (i) => {
+    setActiveIndex(i);
+    resetZoom();
+  };
+
+  const goPrev = () => switchTo(activeIndex === 0 ? certificates.length - 1 : activeIndex - 1);
+  const goNext = () => switchTo(activeIndex === certificates.length - 1 ? 0 : activeIndex + 1);
+
+  const zoomIn = () => setZoom((z) => Math.min(MAX_ZOOM, +(z + STEP).toFixed(2)));
+  const zoomOut = () =>
+    setZoom((z) => {
+      const next = Math.max(MIN_ZOOM, +(z - STEP).toFixed(2));
+      if (next === MIN_ZOOM) setPan({ x: 0, y: 0 });
+      return next;
+    });
+
+  const handleDoubleClick = () => {
+    if (zoom > MIN_ZOOM) {
+      resetZoom();
+    } else {
+      setZoom(2.2);
+    }
+  };
+
+  const handlePointerDown = (e) => {
+    if (zoom <= MIN_ZOOM) return;
+    dragState.current = {
+      dragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      panX: pan.x,
+      panY: pan.y,
+    };
+  };
+
+  const handlePointerMove = (e) => {
+    if (!dragState.current.dragging) return;
+    const dx = e.clientX - dragState.current.startX;
+    const dy = e.clientY - dragState.current.startY;
+    setPan({ x: dragState.current.panX + dx, y: dragState.current.panY + dy });
+  };
+
+  const handlePointerUp = () => {
+    dragState.current.dragging = false;
+  };
 
   return (
     <div
@@ -89,19 +144,65 @@ const CertificateGalleryModal = ({ certificates, startIndex, onClose }) => {
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 flex items-center justify-center text-white transition-colors"
+          className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 flex items-center justify-center text-white transition-colors"
         >
           <X size={16} />
         </button>
 
+        {/* Zoom controls */}
+        <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 bg-black/55 rounded-full p-1">
+          <button
+            onClick={zoomOut}
+            disabled={zoom <= MIN_ZOOM}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
+            title="Zoom out"
+          >
+            <Minus size={14} />
+          </button>
+          <span className="text-[11px] text-white font-semibold min-w-[34px] text-center select-none">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            onClick={zoomIn}
+            disabled={zoom >= MAX_ZOOM}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 disabled:cursor-not-allowed transition-colors"
+            title="Zoom in"
+          >
+            <Plus size={14} />
+          </button>
+          {zoom > MIN_ZOOM && (
+            <button
+              onClick={resetZoom}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white hover:bg-white/15 transition-colors"
+              title="Reset zoom"
+            >
+              <Maximize2 size={12} />
+            </button>
+          )}
+        </div>
+
         {/* Main image viewer */}
-        <div className="relative bg-slate-100 flex items-center justify-center" style={{ minHeight: "320px" }}>
+        <div
+          className="relative bg-slate-100 flex items-center justify-center overflow-hidden"
+          style={{ minHeight: "320px", cursor: zoom > MIN_ZOOM ? (dragState.current.dragging ? "grabbing" : "grab") : "default" }}
+          onDoubleClick={handleDoubleClick}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+        >
           <img
             src={active.certificateImage}
             alt={active.title}
-            className="w-full h-auto object-contain max-h-[55vh]"
+            draggable={false}
+            className="w-full h-auto object-contain max-h-[55vh] select-none"
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transition: dragState.current.dragging ? "none" : "transform 0.2s ease-out",
+              touchAction: "none",
+            }}
           />
-          {certificates.length > 1 && (
+          {certificates.length > 1 && zoom === MIN_ZOOM && (
             <>
               <button
                 onClick={goPrev}
@@ -116,6 +217,11 @@ const CertificateGalleryModal = ({ certificates, startIndex, onClose }) => {
                 <ChevronRight size={18} />
               </button>
             </>
+          )}
+          {zoom === MIN_ZOOM && (
+            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/70 bg-black/40 px-2.5 py-1 rounded-full pointer-events-none">
+              Double-tap or use + to zoom in
+            </span>
           )}
         </div>
 
@@ -136,7 +242,7 @@ const CertificateGalleryModal = ({ certificates, startIndex, onClose }) => {
             {certificates.map((cert, i) => (
               <button
                 key={i}
-                onClick={() => setActiveIndex(i)}
+                onClick={() => switchTo(i)}
                 className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                   i === activeIndex ? "border-sky-400" : "border-slate-200 opacity-60 hover:opacity-100"
                 }`}
