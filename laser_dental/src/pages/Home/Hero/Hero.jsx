@@ -4,6 +4,7 @@ import {
   MessageCircle, Zap
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import useAuth from "../../../hooks/useAuth";
 
 // ── Tooth SVG (lucide has no tooth icon) ──────────────────────────────────
 const ToothIcon = ({ size = 40, opacity = 0.12, style = {} }) => (
@@ -49,6 +50,8 @@ const Counter = ({ target, suffix = "", duration = 1800 }) => {
 // ── Main Hero component ─────────────────────────────────────────────────────
 const Hero = () => {
   const [visible, setVisible] = useState(false);
+  const {user}=useAuth();
+  console.log(user);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 80);
@@ -278,7 +281,7 @@ const Hero = () => {
               <div
                 className="w-72 h-72 md:w-[380px] md:h-[380px] rounded-full flex items-center justify-center relative"
                 style={{
-                  backgroundImage:"url('https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=800')",
+                  backgroundImage: `url(${user?.photoURL || "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=800"})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat",
