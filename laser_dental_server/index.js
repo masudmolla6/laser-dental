@@ -37,6 +37,7 @@ async function run() {
     const reviewsCollection = client.db("Laser_Dental").collection("reviews");
     const branchesCollection = client.db("Laser_Dental").collection("branches");
     const doctorsCollection = client.db("Laser_Dental").collection("doctors");
+    const videosCollection = client.db("Laser_Dental").collection("videos");
 
     // ── Test route ─────────────────────────────────────────────────────
     app.get("/secure", verifyToken, (req, res) => {
@@ -1281,6 +1282,202 @@ async function run() {
         res.status(500).send({ success: false, message: "Failed to delete doctor" });
       }
     });
+
+
+    // ══════════════════════════════════════════════════════════════════════
+    // VIDEO ROUTES — add this block inside run() in your index.js,
+    // near the other route sections (e.g. after DOCTOR ROUTES).
+    //
+    // Also add this line near your other collections:
+    //   const videosCollection = client.db("Laser_Dental").collection("videos");
+    //
+    // ══════════════════════════════════════════════════════════════════════
+    //
+    // SCHEMA — fields stored per video:
+    // {
+    //   title,                  // admin reference / caption, optional
+    //   videoUrl,                // Cloudinary secure_url for the video file
+    //   thumbnailUrl,             // poster image shown before video loads/plays
+    //   cloudinaryPublicId,       // needed to delete the asset from Cloudinary later
+    //   autoplay, muted, loop,    // playback behavior flags for the Hero section
+    //   isActive,                 // only ONE video should be active at a time (shown in Hero)
+    //   order,
+    //   createdAt, updatedAt
+    // }
+
+    // GET the single active video — public (Hero section এর জন্য)
+    app.get("/videos/active", async (req, res) => {
+      try {
+        const result = await videosCollection.findOne({ isActive: true });
+        res.send({ success: true, video: result || null });
+      } catch (error) {
+        console.error("GET /videos/active:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch active video" });
+      }
+    });
+
+    // GET all — admin only (Manage Videos page, active + inactive সব)
+    app.get("/admin/videos", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const result = await videosCollection
+          .find()
+          .sort({ order: 1 })
+          .toArray();
+        res.send({ success: true, videos: result, total: result.length });
+      } catch (error) {
+        console.error("GET /admin/videos:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch videos" });
+      }
+    });
+
+    // GET single by ID — admin only
+    app.get("/videos/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid video ID format" });
+        }
+
+        const result = await videosCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!result) {
+          return res.status(404).send({ success: false, message: "Video not found" });
+        }
+
+        res.send({ success: true, video: result });
+      } catch (error) {
+        console.error("GET /videos/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to fetch video" });
+      }
+    });
+
+    // POST — add new video — admin only
+    // NOTE: the actual video file upload happens directly from the frontend to
+    // Cloudinary. This route only saves the resulting URL + metadata to MongoDB.
+    app.post("/videos", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const data = req.body;
+
+        // Validation — core required fields
+        if (!data.videoUrl) {
+          return res.status(400).send({
+            success: false,
+            message: "videoUrl is required",
+          });
+        }
+
+        // Determine next order value (new video goes to the end)
+        const lastVideo = await videosCollection
+          .find()
+          .sort({ order: -1 })
+          .limit(1)
+          .toArray();
+        const nextOrder = lastVideo.length > 0 ? (lastVideo[0].order || 0) + 1 : 1;
+
+        // If this new video is being set active, deactivate all others first
+        // (only one video should be active / shown in the Hero at a time)
+        if (data.isActive) {
+          await videosCollection.updateMany({}, { $set: { isActive: false } });
+        }
+
+        const video = {
+          title:              data.title?.trim() || "",
+          videoUrl:           data.videoUrl.trim(),
+          thumbnailUrl:       data.thumbnailUrl?.trim() || "",
+          cloudinaryPublicId: data.cloudinaryPublicId?.trim() || "",
+          autoplay:           data.autoplay !== undefined ? data.autoplay : true,
+          muted:              data.muted !== undefined ? data.muted : true,
+          loop:               data.loop !== undefined ? data.loop : true,
+          isActive:           data.isActive !== undefined ? data.isActive : false,
+          order:              nextOrder,
+          createdAt:          new Date(),
+          updatedAt:          new Date(),
+        };
+
+        const result = await videosCollection.insertOne(video);
+
+        res.send({
+          success: true,
+          message: "Video added successfully",
+          insertedId: result.insertedId,
+        });
+      } catch (error) {
+        console.error("POST /videos:", error);
+        res.status(500).send({ success: false, message: "Failed to add video" });
+      }
+    });
+
+    // PATCH — update video (any field, including isActive toggle) — admin only
+    app.patch("/videos/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id     = req.params.id;
+        const update = req.body;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid video ID format" });
+        }
+
+        delete update._id;
+
+        // If this video is being activated, deactivate every other video first —
+        // only one video can be "live" in the Hero section at a time.
+        if (update.isActive === true) {
+          await videosCollection.updateMany(
+            { _id: { $ne: new ObjectId(id) } },
+            { $set: { isActive: false } }
+          );
+        }
+
+        update.updatedAt = new Date();
+
+        const result = await videosCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: update }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ success: false, message: "Video not found" });
+        }
+
+        res.send({
+          success: true,
+          message: "Video updated successfully",
+          modifiedCount: result.modifiedCount,
+        });
+      } catch (error) {
+        console.error("PATCH /videos/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to update video" });
+      }
+    });
+
+    // DELETE — admin only
+    // NOTE: this only removes the DB record. The actual file on Cloudinary is
+    // NOT deleted automatically here, because deleting from Cloudinary requires
+    // a signed request (API secret), which should never be exposed to the
+    // frontend. If you want true cleanup, call Cloudinary's destroy API from
+    // this same route using your server-side API secret (see note below).
+    app.delete("/videos/:id", verifyToken, verifyAdmin(userCollection), async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ success: false, message: "Invalid video ID format" });
+        }
+
+        const result = await videosCollection.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ success: false, message: "Video not found" });
+        }
+
+        res.send({ success: true, message: "Video deleted successfully" });
+      } catch (error) {
+        console.error("DELETE /videos/:id:", error);
+        res.status(500).send({ success: false, message: "Failed to delete video" });
+      }
+    });
+
 
 
 
