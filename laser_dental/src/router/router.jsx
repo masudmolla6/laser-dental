@@ -26,6 +26,8 @@ import ManageBranches from "../pages/Dashboard/ManageBranches/ManageBranches";
 import BranchForm from "../pages/Dashboard/ManageBranches/BranchForm";
 import ManageDoctors from "../pages/Dashboard/ManageDoctors/ManageDoctors";
 import DoctorForm from "../pages/Dashboard/ManageDoctors/DoctorForm";
+import VideoUpload from "../pages/Dashboard/VideoUpload/VideoUpload";
+import ManageVideos from "../pages/Dashboard/ManageVideos/ManageVideos";
 
 const router=createBrowserRouter([
     {
@@ -138,6 +140,14 @@ const router=createBrowserRouter([
             {
                 path: "adminProfile",
                 element:<AdminProfile></AdminProfile>
+            },
+            {
+                path: "videoUpload",
+                element: <VideoUpload></VideoUpload>
+            },
+            {
+                path:"manageVideos",
+                element:<ManageVideos></ManageVideos>
             }
         ]
     }

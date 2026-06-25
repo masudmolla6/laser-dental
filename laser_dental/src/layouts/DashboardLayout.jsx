@@ -161,6 +161,25 @@ const adminGroups = [
       },
     ],
   },
+  {
+    label: "Hero Video",
+    links: [
+      {
+        name: "Upload Video",
+        path: "/dashboard/videoUpload",
+        Icon: ImagePlus, // বা Video icon import করে
+        iconBg: "bg-orange-500/20",
+        iconColor: "text-orange-400",
+      },
+      {
+        name: "Manage Video",
+        path: "/dashboard/manageVideos",
+        Icon: ImagePlus, // বা Video icon import করে
+        iconBg: "bg-orange-500/20",
+        iconColor: "text-orange-400",
+      },
+    ],
+  },
 ];
 
 const sharedLinks = [
