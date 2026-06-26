@@ -17,7 +17,9 @@ import {
   Stethoscope,
   Settings,
   Building2,
-  UserRound, 
+  UserRound,
+  Upload,
+  ListVideo, 
 } from "lucide-react";
 import useAuth from "../hooks/useAuth";
 import { NavLink, Outlet } from "react-router-dom";
@@ -167,14 +169,14 @@ const adminGroups = [
       {
         name: "Upload Video",
         path: "/dashboard/videoUpload",
-        Icon: ImagePlus, // বা Video icon import করে
+        Icon: Upload,
         iconBg: "bg-orange-500/20",
         iconColor: "text-orange-400",
       },
       {
         name: "Manage Video",
         path: "/dashboard/manageVideos",
-        Icon: ImagePlus, // বা Video icon import করে
+        Icon: ListVideo,
         iconBg: "bg-orange-500/20",
         iconColor: "text-orange-400",
       },
