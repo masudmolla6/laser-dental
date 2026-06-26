@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import Logo from "../Logo/Logo";
 import useAuth from "../../hooks/useAuth";
 import useCheckAdmin from "../../hooks/useCheckAdmin";
+import { Briefcase, Home, Image, Phone } from "lucide-react";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const PhoneIcon = () => (
@@ -79,10 +80,10 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { to: "/", label: "Home" },
-    { to: "/services", label: "Services" },
-    { to: "/contact", label: "Contact" },
-    { to: "/gallery", label: "Gallery" },
+    { to: "/", label: "Home", Icon:Home },
+    { to: "/services", label: "Services", Icon: Briefcase},
+    { to: "/contact", label: "Contact", Icon: Phone},
+    { to: "/gallery", label: "Gallery", Icon: Image},
   ];
 
   return (
@@ -306,7 +307,7 @@ const Navbar = () => {
 
             {/* Nav links */}
             <nav className="px-4 flex-1">
-              {navLinks.map(({ to, label }, i) => (
+              {navLinks.map(({ to, label,Icon }, i) => (
                 <NavLink
                   key={to}
                   to={to}
@@ -320,8 +321,12 @@ const Navbar = () => {
                   }
                   style={{ animationDelay: `${i * 40}ms` }}
                 >
-                  {label}
-                  <ArrowRight />
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-4 h-4" />
+                    <span>{label}</span>
+                  </div>
+
+                  <ArrowRight className="w-4 h-4" />
                 </NavLink>
               ))}
 
