@@ -125,7 +125,7 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
   // ── Loading state ──
   if (isLoading) {
     return (
-      <div className="relative w-full aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
         <Loader2 size={28} className="text-sky-400 animate-spin" />
       </div>
     );
@@ -134,7 +134,7 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
   // ── No active video set ──
   if (!video) {
     return (
-      <div className="relative w-full aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex flex-col items-center justify-center gap-3 text-slate-400">
+      <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex flex-col items-center justify-center gap-3 text-slate-400">
         <Sparkles size={28} />
         <p className="text-xs font-medium">No video has been set up yet</p>
       </div>
@@ -160,7 +160,7 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
         ref={videoRef}
         src={video.videoUrl}
         poster={video.thumbnailUrl}
-        className="relative w-full h-full object-cover aspect-[4/5] md:aspect-square"
+        className="relative w-full h-full object-cover aspect-video"
         autoPlay={video.autoplay}
         muted={video.muted}
         loop={video.loop}
@@ -392,20 +392,20 @@ const Hero = () => {
       </div>
 
       {/* ── Main content ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-10 pt-20 pb-10">
+      <div className="relative z-10 max-w-8xl mx-auto px-5 md:px-10 pt-20 pb-10">
 
         {/* ── Top badge ── */}
         <div className="flex justify-center" style={fadeUp(0)}>
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass border border-sky-200 dark:border-sky-800 mb-8 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300 tracking-wide">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-800 tracking-wide">
               Now open at 2 locations in Dhaka
             </span>
           </div>
         </div>
 
         {/* ── Two-column layout ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center min-h-[82vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-4 items-center min-h-[82vh]">
 
           {/* ── Left: Video column (replaces the old text block) ── */}
           <div className="flex flex-col gap-5" style={fadeUp(100)}>
@@ -505,7 +505,7 @@ const Hero = () => {
                     Dr
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-gray-800 dark:text-white leading-tight">Dr. Fatema</p>
+                    <p className="text-xs font-semibold text-gray-800 dark:text-white leading-tight">Sumon Chow...</p>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400">BDS, FCPS</p>
                   </div>
                 </div>

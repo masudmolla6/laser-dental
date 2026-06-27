@@ -207,7 +207,7 @@ const AddBanner = () => {
 
             {/* LEFT: Form */}
             <div className="p-7 md:p-9 border-r border-slate-100">
-              <h2 className="font-semibold text-slate-700 text-base mb-6 flex items-center gap-2">
+              <h2 className="font-semibold text-slate-700 text-base mb-6 flex items-center gap-2"> 
                 <div className="w-1 h-5 rounded-full bg-sky-500" />
                 Slide Details
               </h2>

@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { ImagePlus, Sparkles } from "lucide-react";
 import BannerCard from "./BannerCard";
-import useGallery from "../../../hooks/useGallery";
+import EditBannerModal from "./EditBannerModal";
 import useBannersSecure from "../../../hooks/useBannersSecure";
 
 const EmptyState = () => (
@@ -15,6 +16,7 @@ const EmptyState = () => (
 
 const ManageBanners = () => {
   const [banners, isLoading, refetch] = useBannersSecure();
+  const [editTarget, setEditTarget] = useState(null);
 
   const activeCount   = banners.filter((b) => b.isActive).length;
   const inactiveCount = banners.length - activeCount;
@@ -102,6 +104,7 @@ const ManageBanners = () => {
                     key={banner._id}
                     banner={banner}
                     refetch={refetch}
+                    onEditClick={setEditTarget}
                   />
                 ))}
               </div>
@@ -109,6 +112,18 @@ const ManageBanners = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit modal */}
+      {editTarget && (
+        <EditBannerModal
+          banner={editTarget}
+          onCancel={() => setEditTarget(null)}
+          onSaved={() => {
+            setEditTarget(null);
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 };

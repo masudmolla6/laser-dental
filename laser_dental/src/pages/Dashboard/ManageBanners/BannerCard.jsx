@@ -7,11 +7,12 @@ import {
   AlignLeft,
   AlignRight,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import Swal from "sweetalert2";
 
-const BannerCard = ({ banner, refetch }) => {
+const BannerCard = ({ banner, refetch, onEditClick }) => {
   const axiosSecure = useAxiosSecure();
   const [imgError,   setImgError]   = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -174,6 +175,13 @@ const BannerCard = ({ banner, refetch }) => {
 
         {/* Actions */}
         <div className="flex gap-2">
+          <button
+            onClick={() => onEditClick(banner)}
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border border-sky-200 text-sky-600 bg-sky-50 hover:bg-sky-100 transition-all active:scale-95"
+          >
+            <Pencil size={13} />
+          </button>
+
           <button
             onClick={handleToggle}
             disabled={isToggling}

@@ -18,16 +18,51 @@ import useBranchesSecure from "../../../hooks/useBranchesSecure";
 const IMG_BB_KEY = import.meta.env.VITE_image_host_key;
 
 // ── Upload helper — same logic as AddPicture.jsx ────────────────────────────
+// const uploadToImgBB = async (file) => {
+//   console.log(file);
+//   if (!file) return "";
+//   const formData = new FormData();
+//   formData.append("image", file);
+//   const res = await axios.post(
+//     `https://api.imgbb.com/1/upload?key=${IMG_BB_KEY}`,
+//     formData
+//   );
+
+//   console.log(res.data?.data?.display_url || "");
+//   return res.data?.data?.display_url || "";
+
+// };
+
+
 const uploadToImgBB = async (file) => {
+  console.log(file);
+
   if (!file) return "";
+
   const formData = new FormData();
   formData.append("image", file);
-  const res = await axios.post(
-    `https://api.imgbb.com/1/upload?key=${IMG_BB_KEY}`,
-    formData
-  );
-  return res.data?.data?.display_url || "";
+
+  try {
+    const res = await axios.post(
+      `https://api.imgbb.com/1/upload?key=${IMG_BB_KEY}`,
+      formData
+    );
+
+    console.log("Success:", res.data);
+
+    return res.data?.data?.display_url || "";
+  } catch (err) {
+    console.log("Response Data:", err.response?.data);
+    console.log("Response:", err.response);
+    console.log("Message:", err.message);
+
+    console.log("Error Message:", err.response?.data?.error?.message);
+console.log("Full Error:", err.response?.data?.error);
+
+    throw err; // এটা রেখো, যাতে বাইরের catch-ও কাজ করে
+  }
 };
+
 
 // ── Field wrapper — same as BranchForm ──────────────────────────────────────
 const Field = ({ label, icon: Icon, error, required, children }) => (
