@@ -4,7 +4,7 @@ import useAuth from "./useAuth";
 
 // ── axios instance ─────────────────────────────────────────────────────────
 const axiosSecure = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
 });
 
 // ✅ REQUEST interceptor — useEffect এর বাইরে
