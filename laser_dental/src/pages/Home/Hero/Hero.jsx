@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Check, ArrowRight, Phone, MapPin, Star,
-  MessageCircle, Zap
+  MessageCircle, Zap, Play, Pause, Volume2, VolumeX,
+  Maximize, Loader2, Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
+import useActiveVideo from "../../../hooks/useActiveVideo";
 
 // ── Tooth SVG (lucide has no tooth icon) ──────────────────────────────────
 const ToothIcon = ({ size = 40, opacity = 0.12, style = {} }) => (
@@ -47,11 +49,218 @@ const Counter = ({ target, suffix = "", duration = 1800 }) => {
   return <span ref={ref}>{count}{suffix}</span>;
 };
 
+// ── Premium custom video player ──────────────────────────────────────────────
+const HeroVideoPlayer = ({ video, isLoading }) => {
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+  const [playing, setPlaying] = useState(true);
+  const [muted, setMuted] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [showControls, setShowControls] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const hideTimer = useRef(null);
+
+  useEffect(() => {
+    if (video) {
+      setMuted(video.muted ?? true);
+      setPlaying(video.autoplay ?? true);
+    }
+  }, [video]);
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play();
+      setPlaying(true);
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  };
+
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  };
+
+  const handleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (el.requestFullscreen) el.requestFullscreen();
+  };
+
+  const handleTimeUpdate = () => {
+    const v = videoRef.current;
+    if (!v || !v.duration) return;
+    setCurrentTime(v.currentTime);
+    setProgress((v.currentTime / v.duration) * 100);
+  };
+
+  const handleSeek = (e) => {
+    const v = videoRef.current;
+    if (!v || !v.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    v.currentTime = ratio * v.duration;
+  };
+
+  const formatTime = (t) => {
+    if (!t || Number.isNaN(t)) return "0:00";
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
+  const revealControls = () => {
+    setShowControls(true);
+    clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setShowControls(false), 2600);
+  };
+
+  // ── Loading state ──
+  if (isLoading) {
+    return (
+      <div className="relative w-full aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+        <Loader2 size={28} className="text-sky-400 animate-spin" />
+      </div>
+    );
+  }
+
+  // ── No active video set ──
+  if (!video) {
+    return (
+      <div className="relative w-full aspect-[4/5] md:aspect-square rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex flex-col items-center justify-center gap-3 text-slate-400">
+        <Sparkles size={28} />
+        <p className="text-xs font-medium">No video has been set up yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="hero-video-shell relative w-full rounded-[2rem] overflow-hidden group"
+      onMouseEnter={revealControls}
+      onMouseMove={revealControls}
+      onMouseLeave={() => setShowControls(false)}
+      onTouchStart={revealControls}
+      style={{
+        boxShadow: "0 30px 70px -15px rgba(14,165,233,0.35), 0 0 0 1px rgba(14,165,233,0.08)",
+      }}
+    >
+      {/* Glow border ring */}
+      <div className="hero-video-glow" />
+
+      <video
+        ref={videoRef}
+        src={video.videoUrl}
+        poster={video.thumbnailUrl}
+        className="relative w-full h-full object-cover aspect-[4/5] md:aspect-square"
+        autoPlay={video.autoplay}
+        muted={video.muted}
+        loop={video.loop}
+        playsInline
+        onClick={togglePlay}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={(e) => {
+          setDuration(e.currentTarget.duration);
+          setVideoReady(true);
+        }}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+      />
+
+      {/* Top gradient (legibility for badge) */}
+      <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
+
+      {/* Live badge */}
+      <div className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur-md bg-black/35 border border-white/15">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="text-[10px] text-white font-bold tracking-wider uppercase">Clinic Tour</span>
+      </div>
+
+      {/* Center play button — only visible when paused or hovering */}
+      {(!playing || showControls) && (
+        <button
+          onClick={togglePlay}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          <span
+            className={`hero-play-btn flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full transition-all duration-300 ${
+              playing ? "opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100" : "opacity-100 scale-100"
+            }`}
+          >
+            {playing ? (
+              <Pause size={26} className="text-white" fill="white" />
+            ) : (
+              <Play size={26} className="text-white ml-0.5" fill="white" />
+            )}
+          </span>
+        </button>
+      )}
+
+      {/* Bottom controls bar */}
+      <div
+        className={`absolute bottom-0 inset-x-0 px-4 pb-4 pt-10 transition-opacity duration-300 ${
+          showControls || !playing ? "opacity-100" : "opacity-0"
+        }`}
+        style={{ background: "linear-gradient(to top, rgba(5,12,24,0.85) 0%, transparent 100%)" }}
+      >
+        {/* Progress bar */}
+        <div
+          className="relative h-1.5 rounded-full bg-white/25 cursor-pointer mb-3 group/bar"
+          onClick={handleSeek}
+        >
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-400 to-sky-300"
+            style={{ width: `${progress}%` }}
+          />
+          <div
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-md opacity-0 group-hover/bar:opacity-100 transition-opacity"
+            style={{ left: `calc(${progress}% - 6px)` }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={togglePlay}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
+            >
+              {playing ? <Pause size={13} fill="white" /> : <Play size={13} fill="white" className="ml-0.5" />}
+            </button>
+            <button
+              onClick={toggleMute}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
+            >
+              {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            </button>
+            <span className="text-[11px] text-white/70 font-medium tabular-nums">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          </div>
+          <button
+            onClick={handleFullscreen}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
+          >
+            <Maximize size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Hero component ─────────────────────────────────────────────────────
 const Hero = () => {
   const [visible, setVisible] = useState(false);
-  const {user}=useAuth();
-  console.log(user);
+  const { user } = useAuth();
+  const [activeVideo, videoLoading] = useActiveVideo();
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 80);
@@ -113,6 +322,38 @@ const Hero = () => {
           transform: translateY(-4px);
           box-shadow: 0 20px 50px -10px rgba(14,165,233,0.2);
         }
+
+        /* ── Hero video player styling ── */
+        @keyframes heroGlowPulse {
+          0%, 100% { opacity: 0.55; }
+          50%      { opacity: 1; }
+        }
+        .hero-video-shell {
+          background: #050c18;
+        }
+        .hero-video-glow {
+          position: absolute;
+          inset: -2px;
+          border-radius: inherit;
+          background: linear-gradient(135deg, #38bdf8, #818cf8, #38bdf8);
+          background-size: 200% 200%;
+          opacity: 0.5;
+          z-index: -1;
+          filter: blur(2px);
+          animation: heroGlowPulse 4s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .hero-play-btn {
+          background: rgba(255,255,255,0.16);
+          backdrop-filter: blur(8px);
+          border: 1.5px solid rgba(255,255,255,0.35);
+          box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+          transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .hero-play-btn:hover {
+          background: rgba(255,255,255,0.26);
+          transform: scale(1.08);
+        }
       `}</style>
 
       {/* ── Background decorations ── */}
@@ -140,7 +381,7 @@ const Hero = () => {
           <ToothIcon size={44} opacity={0.1} />
         </div>
 
-        {/* Dot grid — radial gradient can't be done in pure Tailwind so kept as style */}
+        {/* Dot grid */}
         <div
           className="absolute inset-0 opacity-[0.025]"
           style={{
@@ -166,48 +407,12 @@ const Hero = () => {
         {/* ── Two-column layout ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center min-h-[82vh]">
 
-          {/* ── Left: Text column ── */}
-          <div className="flex flex-col gap-7">
+          {/* ── Left: Video column (replaces the old text block) ── */}
+          <div className="flex flex-col gap-5" style={fadeUp(100)}>
+            <HeroVideoPlayer video={activeVideo} isLoading={videoLoading} />
 
-            {/* Headline */}
-            <div style={fadeUp(100)}>
-              <h1
-                className="font-display text-5xl md:text-6xl lg:text-[4.2rem] leading-[1.08] text-gray-900 dark:text-white"
-                style={{ letterSpacing: "-0.02em" }}
-              >
-                Your Smile,
-                <br />
-                <span className="shimmer-text">Our Passion.</span>
-                <br />
-                <span className="text-gray-800 dark:text-gray-100">Your Care.</span>
-              </h1>
-            </div>
-
-            {/* Subtext */}
-            <div style={fadeUp(200)}>
-              <p className="text-gray-500 dark:text-gray-400 text-base md:text-lg leading-relaxed max-w-md">
-                Laser Dental Point delivers world-class dental care with laser precision — from routine cleanings to complete smile makeovers — in a calm, comfortable environment you'll trust.
-              </p>
-            </div>
-
-            {/* Feature bullets */}
-            <div className="flex flex-col gap-2.5" style={fadeUp(300)}>
-              {[
-                "Painless laser-assisted treatments",
-                "Expert doctor with 15+ years experience",
-                "Two convenient Dhaka locations",
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400">
-                    <Check size={12} strokeWidth={2.5} />
-                  </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">{item}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2" style={fadeUp(400)}>
+            {/* CTA buttons — kept here so the page still converts visitors */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-1" style={fadeUp(400)}>
               <Link
                 to="/appointment"
                 className="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-white font-semibold text-sm transition-all duration-200 active:scale-95 group bg-gradient-to-br from-sky-600 to-sky-400 shadow-[0_8px_28px_-4px_rgba(14,165,233,0.5)]"
@@ -236,7 +441,7 @@ const Hero = () => {
             </div>
 
             {/* Social proof strip */}
-            <div className="flex items-center gap-4 pt-2" style={fadeUp(500)}>
+            <div className="flex items-center gap-4 pt-1" style={fadeUp(500)}>
               <div className="flex -space-x-2.5">
                 {[
                   { bg: "bg-blue-200",    text: "text-blue-800",    label: "RH" },
@@ -265,7 +470,7 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* ── Right: Visual column ── */}
+          {/* ── Right: Visual column (unchanged) ── */}
           <div className="relative flex justify-center items-center" style={fadeUp(200)}>
             <div className="relative">
 
@@ -291,24 +496,6 @@ const Hero = () => {
                 <div className="text-sky-400" style={{ opacity: 0.35 }}>
                   <ToothIcon size={160} opacity={1} />
                 </div>
-
-                {/* Clinic name overlay */}
-                {/* <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-gradient-to-br from-sky-600 to-indigo-500">
-                      <ToothIcon size={36} opacity={1} style={{ color: "#fff" }} />
-                    </div>
-                    <p className="font-display text-lg font-bold text-gray-800 leading-tight">
-                      Laser Dental
-                    </p>
-                    <p className="font-display text-lg font-bold text-gray-800 leading-tight">
-                      Point
-                    </p>
-                    <p className="text-xs text-sky-600 font-medium mt-1 tracking-wider uppercase">
-                      Est. 2010 · Dhaka
-                    </p>
-                  </div>
-                </div> */}
               </div>
 
               {/* Floating card: Doctor info */}
@@ -328,7 +515,7 @@ const Hero = () => {
                 </div>
               </div>
 
-              {/* Floating card: Laser — lucide Zap icon */}
+              {/* Floating card: Laser */}
               <div className="absolute -right-6 md:-right-14 top-16 glass border border-white/60 dark:border-white/10 rounded-2xl px-4 py-3 shadow-xl card-hover">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Zap size={12} className="text-sky-500" strokeWidth={2.5} />
