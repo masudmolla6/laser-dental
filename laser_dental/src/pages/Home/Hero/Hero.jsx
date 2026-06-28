@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Check, ArrowRight, Phone, MapPin, Star,
   MessageCircle, Zap, Play, Pause, Volume2, VolumeX,
-  Maximize, Loader2, Sparkles,
+  Maximize, Loader2, Sparkles, RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
@@ -49,6 +49,26 @@ const Counter = ({ target, suffix = "", duration = 1800 }) => {
   return <span ref={ref}>{count}{suffix}</span>;
 };
 
+// ── Cloudinary URL optimizer ───────────────────────────────────────────────
+// Slow / mobile-hotspot network e video play na howar ekta boro karon hocche
+// full-quality, full-bitrate video direct serve kora. Cloudinary URL e
+// "f_auto,q_auto" transformation যুক্ত করলে Cloudinary nijei visitor er
+// network/device bujhe optimized (choto size, adaptive quality) version
+// serve kore — ferotuke buffering/loading shomossa kom hoy.
+//
+// Cloudinary URL shadharonoto eivabe dekhay:
+// https://res.cloudinary.com/<cloud_name>/video/upload/v123456/filename.mp4
+// Amra "upload/" er pore "f_auto,q_auto/" insert kori.
+const optimizeCloudinaryUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+  if (!url.includes("res.cloudinary.com")) return url; // Cloudinary na hole change na
+
+  // already transformation thakle dobar add na kora
+  if (url.includes("f_auto") || url.includes("q_auto")) return url;
+
+  return url.replace("/upload/", "/upload/f_auto,q_auto/");
+};
+
 // ── Premium custom video player ──────────────────────────────────────────────
 const HeroVideoPlayer = ({ video, isLoading }) => {
   const videoRef = useRef(null);
@@ -60,12 +80,16 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [showControls, setShowControls] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [buffering, setBuffering] = useState(false);
   const hideTimer = useRef(null);
 
   useEffect(() => {
     if (video) {
       setMuted(video.muted ?? true);
       setPlaying(video.autoplay ?? true);
+      setVideoError(false);
+      setVideoReady(false);
     }
   }, [video]);
 
@@ -73,7 +97,7 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
-      v.play();
+      v.play().catch(() => setVideoError(true));
       setPlaying(true);
     } else {
       v.pause();
@@ -122,6 +146,15 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
     hideTimer.current = setTimeout(() => setShowControls(false), 2600);
   };
 
+  const handleRetry = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    setVideoError(false);
+    setBuffering(true);
+    v.load();
+    v.play().catch(() => setVideoError(true));
+  };
+
   // ── Loading state ──
   if (isLoading) {
     return (
@@ -141,6 +174,8 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
     );
   }
 
+  const optimizedSrc = optimizeCloudinaryUrl(video.videoUrl);
+
   return (
     <div
       ref={containerRef}
@@ -158,9 +193,18 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
 
       <video
         ref={videoRef}
-        src={video.videoUrl}
+        src={optimizedSrc}
         poster={video.thumbnailUrl}
         className="relative w-full h-full object-cover aspect-video"
+        // ── preload="metadata" ──
+        // Slow / mobile-hotspot network e shobcheye boro shomossa: agei
+        // (default "auto") pura video preload korte chay, eta autoplay er
+        // shathe mile gele dheere network e video "stuck" hoye thake, shudhu
+        // thumbnail (poster) e thake. "metadata" diye browser shudhu
+        // duration/dimension load kore, actual video data shudhu play howar
+        // shomoy progressively stream hoy — ja slow connection e onek beshi
+        // reliable.
+        preload="metadata"
         autoPlay={video.autoplay}
         muted={video.muted}
         loop={video.loop}
@@ -171,9 +215,43 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
           setDuration(e.currentTarget.duration);
           setVideoReady(true);
         }}
-        onPlay={() => setPlaying(true)}
+        onPlay={() => {
+          setPlaying(true);
+          setVideoError(false);
+        }}
         onPause={() => setPlaying(false)}
+        onWaiting={() => setBuffering(true)}
+        onPlaying={() => setBuffering(false)}
+        onCanPlay={() => setBuffering(false)}
+        onError={() => {
+          setVideoError(true);
+          setBuffering(false);
+        }}
       />
+
+      {/* ── Buffering indicator — slow network e ki hocche bujhar jonno ── */}
+      {buffering && !videoError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+          <Loader2 size={32} className="text-white animate-spin" />
+        </div>
+      )}
+
+      {/* ── Error state — video load/play fail hole graceful fallback ── */}
+      {videoError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-900/90 text-white px-6 text-center">
+          <Sparkles size={24} className="text-sky-400" />
+          <p className="text-xs text-slate-300">
+            Video couldn't load — your connection might be slow right now.
+          </p>
+          <button
+            onClick={handleRetry}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 text-xs font-semibold transition-colors"
+          >
+            <RefreshCw size={13} />
+            Try again
+          </button>
+        </div>
+      )}
 
       {/* Top gradient (legibility for badge) */}
       <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
@@ -185,7 +263,7 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
       </div>
 
       {/* Center play button — only visible when paused or hovering */}
-      {(!playing || showControls) && (
+      {!videoError && (!playing || showControls) && (
         <button
           onClick={togglePlay}
           className="absolute inset-0 flex items-center justify-center"
@@ -205,53 +283,55 @@ const HeroVideoPlayer = ({ video, isLoading }) => {
       )}
 
       {/* Bottom controls bar */}
-      <div
-        className={`absolute bottom-0 inset-x-0 px-4 pb-4 pt-10 transition-opacity duration-300 ${
-          showControls || !playing ? "opacity-100" : "opacity-0"
-        }`}
-        style={{ background: "linear-gradient(to top, rgba(5,12,24,0.85) 0%, transparent 100%)" }}
-      >
-        {/* Progress bar */}
+      {!videoError && (
         <div
-          className="relative h-1.5 rounded-full bg-white/25 cursor-pointer mb-3 group/bar"
-          onClick={handleSeek}
+          className={`absolute bottom-0 inset-x-0 px-4 pb-4 pt-10 transition-opacity duration-300 ${
+            showControls || !playing ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ background: "linear-gradient(to top, rgba(5,12,24,0.85) 0%, transparent 100%)" }}
         >
+          {/* Progress bar */}
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-400 to-sky-300"
-            style={{ width: `${progress}%` }}
-          />
-          <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-md opacity-0 group-hover/bar:opacity-100 transition-opacity"
-            style={{ left: `calc(${progress}% - 6px)` }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={togglePlay}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
-            >
-              {playing ? <Pause size={13} fill="white" /> : <Play size={13} fill="white" className="ml-0.5" />}
-            </button>
-            <button
-              onClick={toggleMute}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
-            >
-              {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
-            </button>
-            <span className="text-[11px] text-white/70 font-medium tabular-nums">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-          </div>
-          <button
-            onClick={handleFullscreen}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
+            className="relative h-1.5 rounded-full bg-white/25 cursor-pointer mb-3 group/bar"
+            onClick={handleSeek}
           >
-            <Maximize size={13} />
-          </button>
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-400 to-sky-300"
+              style={{ width: `${progress}%` }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-md opacity-0 group-hover/bar:opacity-100 transition-opacity"
+              style={{ left: `calc(${progress}% - 6px)` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={togglePlay}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
+              >
+                {playing ? <Pause size={13} fill="white" /> : <Play size={13} fill="white" className="ml-0.5" />}
+              </button>
+              <button
+                onClick={toggleMute}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
+              >
+                {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+              </button>
+              <span className="text-[11px] text-white/70 font-medium tabular-nums">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+            </div>
+            <button
+              onClick={handleFullscreen}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white transition-colors"
+            >
+              <Maximize size={13} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
