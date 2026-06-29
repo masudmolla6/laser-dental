@@ -4,8 +4,8 @@ import {
   UserRound, MapPin, GraduationCap, ArrowRight, Sparkles,
   Search, BadgeCheck, Star, ShieldCheck,
 } from "lucide-react";
-import useDoctors from "../../hooks/useDoctors";
-import useBranches from "../../hooks/useBranches";
+import useDoctors from "../../../hooks/useDoctors";
+import useBranches from "../../../hooks/useBranches";
 
 // ── Skeleton loader ──────────────────────────────────────────────────────────
 const DoctorCardSkeleton = () => (

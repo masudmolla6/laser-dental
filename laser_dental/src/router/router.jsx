@@ -29,6 +29,7 @@ import DoctorForm from "../pages/Dashboard/ManageDoctors/DoctorForm";
 import VideoUpload from "../pages/Dashboard/VideoUpload/VideoUpload";
 import ManageVideos from "../pages/Dashboard/ManageVideos/ManageVideos";
 import DoctorsListing from "../pages/Home/DoctorsListing/DoctorsListing";
+import DoctorDetails from "../pages/Home/DoctorDetails/DoctorDetails";
 
 const router=createBrowserRouter([
     {
@@ -46,6 +47,10 @@ const router=createBrowserRouter([
             {
                 path: "/doctors",
                 element: <DoctorsListing></DoctorsListing>
+            },
+            {
+                path: "/doctors/:slug",
+                element: <DoctorDetails></DoctorDetails>
             },
             {
                 path:"/about",
