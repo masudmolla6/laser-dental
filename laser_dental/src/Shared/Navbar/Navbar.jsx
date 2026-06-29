@@ -3,7 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import Logo from "../Logo/Logo";
 import useAuth from "../../hooks/useAuth";
 import useCheckAdmin from "../../hooks/useCheckAdmin";
-import { Briefcase, Home, Image, Phone } from "lucide-react";
+import { Briefcase, Home, Image, Phone, UserRound } from "lucide-react";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const PhoneIcon = () => (
@@ -83,6 +83,7 @@ const Navbar = () => {
     { to: "/", label: "Home", Icon:Home },
     { to: "/services", label: "Services", Icon: Briefcase},
     { to: "/contact", label: "Contact", Icon: Phone},
+    { to: "/doctors", label: "Doctors", Icon: UserRound }, 
     { to: "/gallery", label: "Gallery", Icon: Image},
   ];
 
