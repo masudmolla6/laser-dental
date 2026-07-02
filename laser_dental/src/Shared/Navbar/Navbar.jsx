@@ -82,7 +82,7 @@ const Navbar = () => {
   const navLinks = [
     { to: "/", label: "Home", Icon:Home },
     { to: "/services", label: "Services", Icon: Briefcase},
-    { to: "/contact", label: "Contact", Icon: Phone},
+    // { to: "/contact", label: "Contact", Icon: Phone},
     { to: "/doctors", label: "Doctors", Icon: UserRound }, 
     { to: "/gallery", label: "Gallery", Icon: Image},
   ];
