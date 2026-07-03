@@ -331,7 +331,7 @@ const DoctorDetails = () => {
         <div className="absolute inset-0 dot-field opacity-60 pointer-events-none" />
 
         {/* top bar */}
-        <div className="relative z-10 px-5 md:px-12 pt-7 flex items-center justify-between max-w-3xl mx-auto">
+        <div className="relative z-10 px-5 md:px-12 pt-7 flex items-center justify-between max-w-5xl mx-auto">
           <Link to="/doctors" className="inline-flex items-center gap-2 text-xs font-semibold transition-colors font-body" style={{ color: "var(--ink-70)" }}>
             <ArrowLeft size={14} /> All Doctors
           </Link>
@@ -436,7 +436,7 @@ const DoctorDetails = () => {
 
         {/* stat row */}
         <Reveal delay={260}>
-          <div className="relative z-10 max-w-2xl mx-auto px-5 mt-10 mb-14">
+          <div className="relative z-10 max-w-4xl mx-auto px-5 mt-10 mb-14">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { icon: Calendar, value: doctor.yearsExperience || 10, suffix: "+", label: "Years exp." },
@@ -460,7 +460,7 @@ const DoctorDetails = () => {
       {/* ════════════════════════ PROFILE ════════════════════════ */}
       {doctor.bio && (
         <section className="px-5 md:px-12 pb-20">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <Reveal>
               <SectionHeading eyebrow="About" title="Profile" />
               <p className="font-body text-center leading-relaxed" style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "var(--ink-70)" }}>
@@ -474,13 +474,13 @@ const DoctorDetails = () => {
       {/* ════════════════════════ SPECIALIZATIONS ════════════════════════ */}
       {doctor.specializations?.length > 0 && (
         <section className="pb-20">
-          <div className="max-w-3xl mx-auto px-5 md:px-12">
+          <div className="max-w-5xl mx-auto px-5 md:px-12">
             <Reveal>
               <SectionHeading eyebrow="Expertise" title="Specializations" />
             </Reveal>
           </div>
           <Reveal delay={90}>
-            <div className="flex gap-3 overflow-x-auto scroll-hide px-5 md:px-12 pb-2 justify-center flex-wrap max-w-3xl mx-auto">
+            <div className="flex gap-3 overflow-x-auto scroll-hide px-5 md:px-12 pb-2 justify-center flex-wrap max-w-5xl mx-auto">
               {doctor.specializations.map((spec) => {
                 const Icon = getIcon(spec.iconKey);
                 return (
@@ -504,7 +504,7 @@ const DoctorDetails = () => {
       {/* ════════════════════════ CREDENTIALS — award wall grid ════════════════════════ */}
       {normalizedDegrees.length > 0 && (
         <section className="px-5 md:px-12 pb-20">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <Reveal>
               <SectionHeading eyebrow="Recognition" title="Credentials" />
             </Reveal>
@@ -552,7 +552,7 @@ const DoctorDetails = () => {
       {/* ════════════════════════ ACHIEVEMENTS ════════════════════════ */}
       {doctor.achievements?.length > 0 && (
         <section className="px-5 md:px-12 pb-20">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <Reveal>
               <SectionHeading eyebrow="Milestones" title="Achievements" />
             </Reveal>
@@ -578,7 +578,7 @@ const DoctorDetails = () => {
       {/* ════════════════════════ LOCATIONS ════════════════════════ */}
       {myBranches.length > 0 && (
         <section className="px-5 md:px-12 pb-20">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <Reveal>
               <SectionHeading eyebrow="Visit" title={`Find ${firstName}`} />
             </Reveal>
@@ -620,7 +620,7 @@ const DoctorDetails = () => {
       <section className="px-5 md:px-12 pb-24">
         <Reveal>
           <div
-            className="max-w-2xl mx-auto rounded-[28px] p-8 md:p-14 text-center relative overflow-hidden dot-field"
+            className="max-w-4xl mx-auto rounded-[28px] p-8 md:p-14 text-center relative overflow-hidden dot-field"
             style={{ background: "var(--navy-2)", border: "1px solid rgba(232,190,114,0.25)" }}
           >
             <div className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: "var(--gold-dim)" }}>

@@ -1,26 +1,43 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import {
-  UserRound, MapPin, GraduationCap, ArrowRight, Sparkles,
-  Search, BadgeCheck, Star, ShieldCheck,
+  UserRound, MapPin, GraduationCap, ArrowRight, Search,
+  BadgeCheck, Star, ShieldCheck, Award,
 } from "lucide-react";
 import useDoctors from "../../../hooks/useDoctors";
 import useBranches from "../../../hooks/useBranches";
 
+/*
+  DESIGN CONCEPT C — "Framed Mosaic"
+  ------------------------------------------------------------------
+  Continues the DoctorDetails "Centered Award Profile" language:
+    --navy #06101F / --navy-2 #0B1A2E / --navy-3 #101F38
+    --sky  #38BDF8 (trust accent)   --gold #E8BE72 (premium accent)
+  Type: Playfair Display (display) + DM Sans (body) — same as
+  index.css, no extra font imports.
+
+  Signature elements
+    · Each doctor card sits inside a gold hairline frame with a
+      clipped gold corner tab — echoes a framed certificate/award.
+    · Featured doctors get a gold ribbon; verified doctors get a
+      small teal-gold seal instead of a generic badge.
+  ------------------------------------------------------------------
+*/
+
 // ── Skeleton loader ──────────────────────────────────────────────────────────
 const DoctorCardSkeleton = () => (
-  <div className="rounded-3xl overflow-hidden bg-white border border-slate-100 animate-pulse">
-    <div className="h-64 bg-slate-200" />
+  <div className="rounded-2xl overflow-hidden" style={{ background: "var(--navy-2)", border: "1px solid var(--hair)" }}>
+    <div className="h-64 animate-pulse" style={{ background: "var(--navy-3)" }} />
     <div className="p-6 flex flex-col gap-3">
-      <div className="h-5 w-2/3 bg-slate-200 rounded" />
-      <div className="h-3.5 w-1/2 bg-slate-100 rounded" />
-      <div className="h-3 w-full bg-slate-100 rounded" />
-      <div className="h-10 w-full bg-slate-100 rounded-xl mt-2" />
+      <div className="h-5 w-2/3 rounded animate-pulse" style={{ background: "var(--navy-3)" }} />
+      <div className="h-3.5 w-1/2 rounded animate-pulse" style={{ background: "var(--navy-3)" }} />
+      <div className="h-3 w-full rounded animate-pulse" style={{ background: "var(--navy-3)" }} />
+      <div className="h-10 w-full rounded-xl mt-2 animate-pulse" style={{ background: "var(--navy-3)" }} />
     </div>
   </div>
 );
 
-// ── Doctor card ──────────────────────────────────────────────────────────────
+// ── Doctor card — framed mosaic tile ────────────────────────────────────────
 const DoctorCard = ({ doctor, branchMap }) => {
   const branchNames = (doctor.branchSlugs || [])
     .map((slug) => branchMap[slug])
@@ -34,56 +51,66 @@ const DoctorCard = ({ doctor, branchMap }) => {
   return (
     <Link
       to={`/doctors/${doctor.slug}`}
-      className="doctor-card group relative rounded-3xl overflow-hidden bg-white border border-slate-100 flex flex-col"
+      className="doctor-frame group relative rounded-2xl overflow-hidden flex flex-col"
+      style={{ background: "var(--navy-2)", border: "1px solid rgba(232,190,114,0.28)" }}
     >
+      {/* Gold corner tab */}
+      <div className="doctor-frame-tab absolute -top-0.5 -left-0.5 z-20 w-9 h-9" style={{ background: "var(--gold)", clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+
       {/* Featured ribbon */}
       {doctor.isFeatured && (
-        <div className="absolute top-4 left-4 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400 text-white text-[10px] font-bold uppercase tracking-wide shadow-sm">
-          <Star size={10} fill="white" />
+        <div
+          className="absolute top-3.5 left-3.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full font-body text-[10px] font-bold uppercase tracking-wide"
+          style={{ background: "var(--gold)", color: "var(--navy)" }}
+        >
+          <Star size={10} fill="var(--navy)" />
           Featured
         </div>
       )}
 
-      {/* Verified badge */}
+      {/* Verified seal */}
       {certifiedCount > 0 && (
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/95 text-white text-[10px] font-bold uppercase tracking-wide shadow-sm">
+        <div
+          className="absolute top-3.5 right-3.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full font-body text-[10px] font-bold uppercase tracking-wide"
+          style={{ background: "rgba(6,16,31,0.65)", border: "1px solid rgba(56,189,248,0.5)", color: "var(--sky)", backdropFilter: "blur(4px)" }}
+        >
           <ShieldCheck size={10} />
           Verified
         </div>
       )}
 
       {/* Photo */}
-      <div className="relative h-64 w-full overflow-hidden bg-gradient-to-br from-[#0c2340] to-[#0f2d52]">
+      <div className="relative h-64 w-full overflow-hidden" style={{ background: "linear-gradient(155deg, #101F38, #0B1A2E)" }}>
         {doctor.photo ? (
           <img
             src={doctor.photo}
             alt={doctor.name}
-            className="doctor-card-img w-full h-full object-cover object-top"
+            className="doctor-frame-img w-full h-full object-cover object-top"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <UserRound size={56} className="text-white/20" />
+            <UserRound size={56} style={{ color: "rgba(255,255,255,0.15)" }} />
           </div>
         )}
-        <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 inset-x-0 h-24 pointer-events-none" style={{ background: "linear-gradient(to top, var(--navy-2), transparent)" }} />
       </div>
 
       {/* Body */}
       <div className="p-6 flex flex-col gap-3 flex-1">
         <div>
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-display font-bold text-slate-900 text-lg leading-tight">
+            <h3 className="font-display font-bold text-lg leading-tight" style={{ color: "var(--ink)" }}>
               {doctor.name}
             </h3>
-            <BadgeCheck size={17} className="text-sky-500 flex-shrink-0 mt-0.5" />
+            <BadgeCheck size={17} style={{ color: "var(--sky)" }} className="flex-shrink-0 mt-0.5" />
           </div>
-          <p className="text-sky-600 text-sm font-semibold mt-1">{doctor.title}</p>
+          <p className="font-mono text-[11px] font-semibold mt-1.5 uppercase tracking-wider" style={{ color: "var(--gold)" }}>{doctor.title}</p>
         </div>
 
         {/* Degrees count */}
         {normalizedDegrees.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <GraduationCap size={13} className="text-slate-400" />
+          <div className="flex items-center gap-1.5 font-body text-xs" style={{ color: "var(--ink-45)" }}>
+            <GraduationCap size={13} style={{ color: "var(--ink-45)" }} />
             <span>{normalizedDegrees.length} qualification{normalizedDegrees.length > 1 ? "s" : ""}</span>
           </div>
         )}
@@ -94,7 +121,8 @@ const DoctorCard = ({ doctor, branchMap }) => {
             {branchNames.map((name) => (
               <span
                 key={name}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-[11px] font-semibold"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-body text-[11px] font-semibold"
+                style={{ background: "var(--sky-dim)", color: "var(--sky)" }}
               >
                 <MapPin size={10} />
                 {name}
@@ -105,19 +133,19 @@ const DoctorCard = ({ doctor, branchMap }) => {
 
         {/* Bio preview */}
         {doctor.bio && (
-          <p className="text-slate-400 text-xs leading-relaxed line-clamp-2 mt-1">
+          <p className="font-body text-xs leading-relaxed line-clamp-2 mt-1" style={{ color: "var(--ink-45)" }}>
             {doctor.bio}
           </p>
         )}
 
         {/* CTA */}
-        <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100">
-          <span className="text-sm font-bold text-sky-600 flex items-center gap-1.5">
+        <div className="mt-auto pt-4 flex items-center justify-between" style={{ borderTop: "1px solid var(--hair)" }}>
+          <span className="font-body text-sm font-bold flex items-center gap-1.5" style={{ color: "var(--gold)" }}>
             View Profile
             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </span>
           {doctor.yearsExperience > 0 && (
-            <span className="text-[11px] font-semibold text-slate-400">
+            <span className="font-mono text-[11px] font-semibold" style={{ color: "var(--ink-45)" }}>
               {doctor.yearsExperience}+ yrs exp.
             </span>
           )}
@@ -145,76 +173,84 @@ const DoctorsListing = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc]">
+    <div className="min-h-screen" style={{ background: "var(--navy)" }}>
       <style>{`
-        .doctor-card {
+        :root {
+          --navy: #06101F;
+          --navy-2: #0B1A2E;
+          --navy-3: #101F38;
+          --hair: rgba(255,255,255,0.09);
+          --sky: #38BDF8;
+          --sky-dim: rgba(56,189,248,0.14);
+          --gold: #E8BE72;
+          --gold-dim: rgba(232,190,114,0.14);
+          --ink: #FFFFFF;
+          --ink-70: rgba(255,255,255,0.72);
+          --ink-45: rgba(255,255,255,0.45);
+        }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .font-mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; }
+        .font-body { font-family: 'DM Sans', sans-serif; }
+
+        .stage-glow {
+          background:
+            radial-gradient(60% 50% at 50% 0%, rgba(56,189,248,0.14) 0%, transparent 60%),
+            radial-gradient(40% 35% at 85% 20%, rgba(232,190,114,0.10) 0%, transparent 60%);
+        }
+        .dot-field {
+          background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+          background-size: 28px 28px;
+        }
+
+        .doctor-frame {
           transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease, border-color 0.35s ease;
-          box-shadow: 0 2px 16px rgba(0,0,0,0.04);
         }
-        .doctor-card:hover {
+        .doctor-frame:hover {
           transform: translateY(-8px);
-          box-shadow: 0 28px 60px -14px rgba(14,165,233,0.22);
-          border-color: rgba(14,165,233,0.25);
+          box-shadow: 0 28px 56px -16px rgba(232,190,114,0.28);
+          border-color: rgba(232,190,114,0.6) !important;
         }
-        .doctor-card-img {
-          transition: transform 0.5s ease;
-        }
-        .doctor-card:hover .doctor-card-img {
-          transform: scale(1.06);
-        }
-        .shimmer {
-          background: linear-gradient(90deg, #0ea5e9 0%, #7c3aed 40%, #ec4899 70%, #0ea5e9 100%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: shimmer-text 5s linear infinite;
-        }
-        @keyframes shimmer-text {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
+        .doctor-frame-img { transition: transform 0.5s ease; }
+        .doctor-frame:hover .doctor-frame-img { transform: scale(1.06); }
+        .doctor-frame-tab { transition: transform 0.3s ease; }
+        .doctor-frame:hover .doctor-frame-tab { transform: scale(1.15); }
+
+        .search-input::placeholder { color: rgba(255,255,255,0.35); }
+
+        @media (prefers-reduced-motion: reduce) {
+          * { animation: none !important; transition: none !important; }
         }
       `}</style>
 
       {/* ── Hero header ── */}
-      <section
-        className="relative overflow-hidden pt-20 pb-16 px-5 md:px-10"
-        style={{ background: "linear-gradient(155deg, #080f1e 0%, #0c1e3a 55%, #101d35 100%)" }}
-      >
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.02]"
-          style={{
-            backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
-        <div
-          className="absolute -top-32 right-0 w-[500px] h-[500px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(14,165,233,0.1), transparent 70%)" }}
-        />
+      <section className="relative overflow-hidden pt-20 pb-16 px-5 md:px-10 stage-glow">
+        <div className="absolute inset-0 dot-field opacity-60 pointer-events-none" />
 
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 mb-5">
-            <div className="w-8 h-px bg-sky-400" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-sky-400">Our Team</span>
-            <div className="w-8 h-px bg-sky-400" />
+            <div className="w-8 h-px" style={{ background: "var(--gold)", opacity: 0.6 }} />
+            <span className="font-mono text-[11px] font-bold uppercase tracking-[0.28em]" style={{ color: "var(--gold)" }}>Our Team</span>
+            <div className="w-8 h-px" style={{ background: "var(--gold)", opacity: 0.6 }} />
           </div>
-          <h1 className="font-display font-bold text-white text-[clamp(2rem,5vw,3.2rem)] leading-tight mb-4">
-            Meet Our <span className="shimmer">Doctors</span>
+          <h1 className="font-display font-bold text-[clamp(2rem,5vw,3.2rem)] leading-tight mb-4" style={{ color: "var(--ink)" }}>
+            Meet Our Doctors
           </h1>
-          <p className="text-white/50 text-sm md:text-base max-w-xl mx-auto leading-relaxed mb-8">
+          <p className="font-body text-sm md:text-base max-w-xl mx-auto leading-relaxed mb-8" style={{ color: "var(--ink-45)" }}>
             Experienced, certified, and dedicated to giving you a smile you can trust.
           </p>
 
           {/* Search */}
           <div className="max-w-md mx-auto relative">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-45)" }} />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name or specialty..."
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white/10 border border-white/15 text-white placeholder:text-white/35 text-sm outline-none focus:bg-white/15 focus:border-sky-400/50 transition-all backdrop-blur-sm"
+              className="search-input font-body w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+              style={{ background: "var(--navy-2)", border: "1px solid var(--hair)", color: "var(--ink)" }}
+              onFocus={(e) => { e.target.style.borderColor = "rgba(232,190,114,0.5)"; }}
+              onBlur={(e) => { e.target.style.borderColor = "var(--hair)"; }}
             />
           </div>
         </div>
@@ -231,22 +267,24 @@ const DoctorsListing = () => {
             </div>
           ) : filteredDoctors.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center py-20">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: "var(--navy-2)", color: "var(--ink-45)" }}>
                 <UserRound size={28} />
               </div>
-              <h3 className="font-display font-bold text-slate-700 text-lg mb-1">
+              <h3 className="font-display font-bold text-lg mb-1" style={{ color: "var(--ink)" }}>
                 {doctors?.length === 0 ? "No doctors listed yet" : "No matching doctors"}
               </h3>
-              <p className="text-sm text-slate-400 max-w-xs">
+              <p className="font-body text-sm max-w-xs" style={{ color: "var(--ink-45)" }}>
                 {doctors?.length === 0
                   ? "Check back soon — our team profiles are on the way."
                   : "Try a different search term."}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+            <div className={`grid gap-7 ${filteredDoctors.length === 1 ? "grid-cols-1 justify-items-center" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
               {filteredDoctors.map((doctor) => (
-                <DoctorCard key={doctor._id} doctor={doctor} branchMap={branchMap} />
+                <div key={doctor._id} className={filteredDoctors.length === 1 ? "w-full max-w-sm" : "contents"}>
+                  <DoctorCard doctor={doctor} branchMap={branchMap} />
+                </div>
               ))}
             </div>
           )}
