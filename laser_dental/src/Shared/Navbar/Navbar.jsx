@@ -183,12 +183,16 @@ const Navbar = () => {
           className="transition-all duration-300"
           style={{
             background: scrolled
-              ? "rgba(9, 20, 45, 0.97)"
-              : "rgba(9, 20, 45, 0.85)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            borderBottom: scrolled ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
-            boxShadow: scrolled ? "0 4px 30px rgba(0,0,0,0.25)" : "none",
+              ? "rgba(9, 20, 45, 0.55)"
+              : "rgba(9, 20, 45, 0.35)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            borderBottom: scrolled
+              ? "1px solid rgba(255,255,255,0.1)"
+              : "1px solid rgba(255,255,255,0.05)",
+            boxShadow: scrolled
+              ? "0 4px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05)"
+              : "none",
           }}
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between px-5 md:px-10 h-16">
