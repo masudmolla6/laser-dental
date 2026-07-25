@@ -224,7 +224,7 @@ const DashboardLayout = () => {
   const groups = user?.email === "masudmolla2937@gmail.com" ? adminGroups : [];
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen bg-slate-500">
 
       {/* ── Sidebar ── */}
       <aside
@@ -329,11 +329,11 @@ const DashboardLayout = () => {
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Mobile top bar */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm flex-shrink-0">
+        <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 backdrop-blur-md border-b shadow-sm flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border text-slate-100 hover:bg-slate-400 transition-colors"
             >
               <Menu size={18} />
             </button>
@@ -347,7 +347,7 @@ const DashboardLayout = () => {
           <img
             src={user?.photoURL || "https://i.ibb.co/2kR8z2Q/user.png"}
             alt="avatar"
-            className="w-8 h-8 rounded-xl object-cover border-2 border-slate-200"
+            className="w-8 h-8 rounded-xl object-cover border-2 border-slate-400"
           />
         </header>
 
