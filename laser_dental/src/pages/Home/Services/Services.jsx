@@ -75,7 +75,7 @@ const ServiceCard = ({ service }) => {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`group relative flex flex-col rounded-3xl overflow-hidden border border-gray-200 bg-white
+      className={`group relative flex flex-col rounded-3xl overflow-hidden border border-gray-200 bg-gray-300
         transition-all duration-300 cursor-pointer shadow-sm
         hover:-translate-y-1.5 hover:shadow-xl ${colors.borderHover}`}
     >
@@ -171,7 +171,7 @@ const Services = () => {
   );
 
   return (
-    <section className="min-h-screen bg-slate-50 py-24 px-4 md:px-8">
+    <section className="min-h-screen  py-24 px-4 md:px-8">
 
       {/* BG blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">

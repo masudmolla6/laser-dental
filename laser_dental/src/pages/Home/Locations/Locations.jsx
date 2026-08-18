@@ -344,7 +344,7 @@ const Locations = () => {
   const primaryPhone = branches[0]?.phone || "01745565435";
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-gray-500" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
         .font-display { font-family: 'Playfair Display', serif; }
